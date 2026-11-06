@@ -242,7 +242,7 @@ button{font-family:inherit;color:inherit}
 
 /* map symbols & labels */
 .sym{display:block;filter:drop-shadow(0 0 1px var(--paper)) drop-shadow(0 0 1px var(--paper))}
-.lbl{position:absolute;white-space:nowrap;font:600 12.5px/1 var(--f-tech);color:var(--ink);text-shadow:0 0 2px var(--paper),0 0 2px var(--paper),0 0 3px var(--paper);pointer-events:none;transform:translate(9px,-50%)}
+.lbl{position:absolute;white-space:nowrap;font:600 12.5px/1 var(--f-tech);color:var(--ink);text-shadow:0 0 2px var(--paper),0 0 2px var(--paper),0 0 3px var(--paper);pointer-events:none;transform:translate(calc(9px * var(--mks,1)),-50%)}
 .lbl.city{font:700 16px var(--f-tech);letter-spacing:.12em;text-transform:uppercase}
 .lbl.town{font:700 13.5px var(--f-tech);letter-spacing:.06em;text-transform:uppercase}
 .lbl.vill{font:500 12.5px var(--f-tech);color:var(--ink-2)}
@@ -256,6 +256,21 @@ button{font-family:inherit;color:inherit}
 .lbl .pp{font:600 10.5px var(--f-tech);color:var(--ink-2);letter-spacing:0}
 .lbl.sheetlbl{font:700 15px var(--f-tech);color:var(--red);transform:translate(-50%,0);text-align:center;letter-spacing:.04em}
 .lbl.hide{display:none}
+/* label language: .ru = Russian as printed; .tr = English line; .tri = English inline (ENG mode, settlements) */
+.lbl .tr{display:none;font:400 11px var(--f-body);letter-spacing:.03em;text-transform:none;color:var(--ink-2);margin-top:2px;font-style:normal}
+.lbl .tri,.lbl .en-x{display:none}
+.lbl.city .tr,.lbl.town .tr,.lbl.rad .tr,.zclose .lbl .tr,.lang-both .lbl .tr{display:block}
+.lbl.zone .tr{display:none}
+.lang-en .lbl .ru,.lang-en .lbl .ru-x,.lang-en .lbl.vill2 .tr{display:none}
+.lang-en .lbl .tr,.lang-en .lbl.zone .tr,.lang-en .lbl .tri{display:inline;font:inherit;letter-spacing:inherit;text-transform:inherit;color:inherit;margin-top:0}
+.lang-en .lbl.vill2 .tr{display:none}
+.lang-en .lbl .en-x{display:block}
+/* bigger tap target for site symbols on touch screens */
+@media (pointer:coarse){.mk::before{content:"";position:absolute;width:40px;height:40px;left:-20px;top:-20px}}
+.seg{display:flex;border:1.5px solid var(--ink);margin:6px 0 4px}
+.seg button{flex:1;padding:6px 4px;font:700 12px var(--f-tech);letter-spacing:.05em;background:var(--paper);color:var(--ink);border:0;border-right:1px solid var(--ink);cursor:pointer}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--ink);color:var(--paper)}
 .mk.sel .sym{filter:drop-shadow(0 0 0 var(--red)) drop-shadow(0 0 3px var(--red))}
 
 /* radiation hatch fills (pattern defs injected into the overlay SVG) */
@@ -553,8 +568,8 @@ for(let lng=28.8+0.0333;lng<=31.15;lng+=1/6) L.polyline([[50.95,lng],[51.75,lng]
 L.polygon(ZONE_ADMIN,{renderer:svgR,color:C.red,weight:2,dashArray:"10 4 2 4",fill:false,opacity:.75,interactive:false}).addTo(G.zones);
 L.circle(U4,{radius:30000,renderer:svgR,color:C.red,weight:2,dashArray:"8 5",fill:false,interactive:false}).addTo(G.zones);
 L.circle(U4,{radius:10000,renderer:svgR,color:C.red,weight:2.2,dashArray:"8 5",fill:false,interactive:false}).addTo(G.zones);
-label(off(U4[0],U4[1],-10.4,0),"10 КМ","zone",10,G.zones);
-label(off(U4[0],U4[1],-30.4,0),"30 КМ","zone",9,G.zones);
+label(off(U4[0],U4[1],-10.4,0),`<span class="ru">10 КМ</span><span class="tr">10 km</span>`,"zone",10,G.zones);
+label(off(U4[0],U4[1],-30.4,0),`<span class="ru">30 КМ</span><span class="tr">30 km</span>`,"zone",9,G.zones);
 
 /* water traced from the sheets */
 (window.ATLAS_WATER?Promise.resolve(window.ATLAS_WATER):fetch("data/water.geojson").then(r=>{if(!r.ok) throw new Error(r.status); return r.json();})).then(gj=>{
@@ -575,7 +590,7 @@ VILL.forEach((v,i)=>{
     m=L.circleMarker([v.lat,v.lng],{renderer:svgR,radius:u?5.5:5,color:u?C.red:"#fffaf0",weight:u?2:1.8,dashArray:u?"2.2 1.6":null,fillColor:"#86522e",fillOpacity:u?0.45:1}); }
   m.bindTooltip(`${esc(v.n)}${(v.f||[]).includes("u")?" (нежил.)":""}`,{direction:"top",offset:[0,-4],className:"sheet-tip"});
   m.on("click",e=>{L.DomEvent.stopPropagation(e); selectV(i,false);}); m.addTo(lay); vmarkers[i]=m;
-  label([v.lat,v.lng],`${esc(v.n)}${v.p?` <span class="pp">${String(v.p).replace(".",",")}</span>`:""}${(v.f||[]).includes("u")?"<span class='en'>нежил.</span>":""}`,"vill2"+((v.f||[]).includes("u")?" un":""),13,lay);
+  label([v.lat,v.lng],`<span class="ru">${esc(v.n)}</span><span class="tri">${esc(v.t||v.n)}</span>${v.p?` <span class="pp">${String(v.p).replace(".",",")}</span>`:""}${(v.f||[]).includes("u")?"<span class='en ru-x'>нежил.</span><span class='en en-x'>uninhabited</span>":""}<span class="tr">${esc(v.t||v.n)}</span>`,"vill2"+((v.f||[]).includes("u")?" un":""),13,lay);
 });
 /* ===================== lines and areas from data/overlays.json ===================== */
 const STYLES={
@@ -608,7 +623,7 @@ function ovCenter(o){ if(o.type==="area"){let a=0,b=0;o.pts.forEach(p=>{a+=p[0];
     if(opt.interactive){ lay.bindTooltip(esc(o.ru||o.en||st.ru),{sticky:true,className:"sheet-tip"}); lay.on("click",e=>{L.DomEvent.stopPropagation(e); selectOv(o.id);}); }
     lay.addTo(grp);
   });
-  if(o.ru) label(ovCenter(o),esc(o.ru),o.type==="area"?"zone":"vill",o.z||12,grp);
+  if(o.ru) label(ovCenter(o),`<span class="ru">${esc(o.ru)}</span><span class="tr">${esc(o.en||o.ru)}</span>`,o.type==="area"?"zone":"vill",o.z||12,grp);
 });
 
 /* radiation */
@@ -616,9 +631,9 @@ RAD.forEach(c=>c.shapes.forEach(s=>{
   L.polygon(plume(s[0],s[1],s[2],s[3],s[4]),{renderer:svgR,className:c.cls,color:c.cls==="rad1"?C.red:C.violet,weight:c.cls==="rad3"?1:1.3,opacity:.7,dashArray:c.cls==="rad3"?"4 3":null,fillOpacity:1,interactive:false,smoothFactor:1.5}).addTo(G.rad);
 }));
 L.polyline(FUEL_TRACE,{renderer:svgR,color:C.red,weight:1.4,dashArray:"2 4",interactive:false}).addTo(G.rad);
-label(off(U4[0],U4[1],2.3,-58),"ЗАПАДНЫЙ СЛЕД · western trace","rad",10,G.rad);
-label(off(U4[0],U4[1],40,-6),"СЕВЕРНЫЙ СЛЕД · northern trace","rad",10,G.rad);
-label(off(U4[0],U4[1],-30,-12),"ЮЖНЫЙ СЛЕД · southern trace","rad",10,G.rad);
+label(off(U4[0],U4[1],2.3,-58),`<span class="ru">ЗАПАДНЫЙ СЛЕД</span><span class="tr">western trace</span>`,"rad",10,G.rad);
+label(off(U4[0],U4[1],40,-6),`<span class="ru">СЕВЕРНЫЙ СЛЕД</span><span class="tr">northern trace</span>`,"rad",10,G.rad);
+label(off(U4[0],U4[1],-30,-12),`<span class="ru">ЮЖНЫЙ СЛЕД</span><span class="tr">southern trace</span>`,"rad",10,G.rad);
 
 /* site markers */
 const markers={};
@@ -628,10 +643,10 @@ SITES.forEach(s=>{
   m.on("click",()=>select(s.id,false));
   m.addTo(lay); markers[s.id]=m;
   const cls = s.lc || (s.cat==="settle"?"vill":"");
-  label([s.lat,s.lng],`${s.ru}${cls==="city"||cls==="town"?`<span class='en'>${s.en}</span>`:""}`,cls==="water"?"water":cls,s.z,lay);
+  label([s.lat,s.lng],`<span class="ru">${s.ru}</span><span class="tr">${s.en||s.ru}</span>`,cls==="water"?"water":cls,s.z,lay);
 });
 // fix divIcon anchor to centre (iconSize:null keeps natural size; centre via CSS)
-const stl=document.createElement("style");stl.textContent=".mk{transform-origin:center} .mk>svg{transform:translate(-50%,-50%)}";document.head.appendChild(stl);
+const stl=document.createElement("style");stl.textContent=".mk{transform-origin:center} .mk>svg{transform:translate(-50%,-50%) scale(var(--mks,1))}";document.head.appendChild(stl);
 
 /* add default layers */
 function zoomOK(id){return !MINZ[id]||map.getZoom()>=MINZ[id];}
@@ -641,8 +656,12 @@ function saveLayers(){try{localStorage.setItem("cza-layers",JSON.stringify(ON));
 function reorder(){ if(map.hasLayer(G.rad)) G.rad.eachLayer(x=>x.bringToBack&&x.bringToBack()); }
 
 /* labels by zoom */
-function zoomLabels(){const z=map.getZoom(); labels.forEach(m=>{const el=m.getElement&&m.getElement(); if(el){el.firstChild.classList.toggle("hide",z<m._minZ);}});}
+function zoomLabels(){const z=map.getZoom(), c=map.getContainer(); c.classList.toggle("zclose",z>=14); c.style.setProperty("--mks",z>=13?1.3:z>=12?1.2:z>=11?1.1:1); labels.forEach(m=>{const el=m.getElement&&m.getElement(); if(el){el.firstChild.classList.toggle("hide",z<m._minZ);}});}
 map.on("zoomend layeradd",zoomLabels); zoomLabels();
+/* label language: ru (as printed, English added at close zoom) · both · en */
+let LANG=(()=>{try{const v=localStorage.getItem("cza-lang");return ["ru","both","en"].includes(v)?v:"ru";}catch(e){return "ru";}})();
+function applyLang(){const c=map.getContainer(); c.classList.remove("lang-ru","lang-both","lang-en"); c.classList.add("lang-"+LANG);}
+applyLang();
 
 /* ===================== kilometre grid (СК-42, Gauss–Krüger) and frame labels ===================== */
 const edge=document.getElementById("edge");
@@ -749,6 +768,9 @@ function renderLayers(){
   let h=`<h2>Слои карты</h2><p class="small muted">Map layers. Tick to show or hide. Labels for small objects appear as you zoom in.</p>
   <h3>Карта-основа · base map</h3><p class="small">General Staff topographic sheets, 1:100 000, editions 1981–1993. Eight sheets joined and aligned to modern coordinates.</p>
   <div class="range" style="margin-left:0"><span>Яркость основы</span><input type="range" id="baseop" min="0.2" max="1" step="0.05" value="${baseOp}" aria-label="Base map opacity"></div>
+  <h3>Подписи · map labels</h3>
+  <div class="seg" role="group" aria-label="Map label language"><button data-lang="ru" aria-pressed="${LANG==="ru"}">РУС</button><button data-lang="both" aria-pressed="${LANG==="both"}">РУС + ENG</button><button data-lang="en" aria-pressed="${LANG==="en"}">ENG</button></div>
+  <p class="small muted">Russian as printed on the sheets, with English added from about 1:25 000 when zoomed in. Or show both everywhere, or English only.</p>
   <h3>Наложения · overlays</h3>`;
   LAYERS.forEach(l=>{h+=`<label class="layer" for="ly-${l.id}"><input type="checkbox" id="ly-${l.id}" data-l="${l.id}" ${ON[l.id]?"checked":""}>${l.sw.replace('class="sym"','class="sw"')}<span class="nm"><b>${l.ru}</b><span>${l.en}</span></span></label>`;
     if(l.id==="rad") h+=`<div class="range"><span>Прозрачность</span><input type="range" id="radop" min="0.15" max="1" step="0.05" value="${radOp}" aria-label="Radiation layer opacity"></div>`;});
@@ -761,6 +783,8 @@ function renderLayers(){
   const bo=pbody.querySelector("#baseop"); if(bo) bo.addEventListener("input",()=>{baseOp=+bo.value;applyBaseOp();});
   const ro=pbody.querySelector("#radop"); if(ro) ro.addEventListener("input",()=>{radOp=+ro.value;applyRadOp();});
   pbody.querySelectorAll("[data-go]").forEach(b=>b.addEventListener("click",()=>go(b.dataset.go)));
+  pbody.querySelectorAll("[data-lang]").forEach(b=>b.addEventListener("click",()=>{LANG=b.dataset.lang; try{localStorage.setItem("cza-lang",LANG)}catch(e){} applyLang();
+    pbody.querySelectorAll("[data-lang]").forEach(x=>x.setAttribute("aria-pressed",x.dataset.lang===LANG));}));
   wirePlant();
 }
 let radOp=0.55;
