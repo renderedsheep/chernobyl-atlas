@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Chernobyl Zone Atlas</title>
 <meta name="description" content="Interactive atlas of the Chernobyl exclusion zone on Soviet General Staff 1:100 000 maps: the plant, Pripyat, Duga, 200+ settlements, 1986 fallout traces and photographs.">
-<meta name="generator" content="Chernobyl Zone Atlas 0.7">
+<meta name="generator" content="Chernobyl Zone Atlas 0.7.1">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&family=PT+Mono&family=PT+Sans+Narrow:wght@400;700&family=Oswald:wght@500;600&display=swap">
 <style>
@@ -279,7 +279,7 @@ path.rad1{fill:url(#h-rad1)!important}
 path.rad2{fill:url(#h-rad2)!important}
 path.rad3{fill:url(#h-rad3)!important}
 
-.mob-toggle{display:none}
+.tabs .mob-toggle{display:none}
 
 @media (max-width:760px){
   .app{grid-template-columns:1fr;grid-template-rows:auto minmax(0,1fr) auto}
@@ -291,7 +291,8 @@ path.rad3{fill:url(#h-rad3)!important}
   .head h1{font-size:21px}
   .head .en{font-size:10px;letter-spacing:.12em;margin-top:3px}
   .head .meta{display:none}
-  .mob-toggle{display:block;border:none;background:var(--ink);color:var(--paper);font:700 12px var(--f-body);letter-spacing:.08em;text-transform:uppercase;padding:6px;padding-bottom:calc(6px + env(safe-area-inset-bottom,0px))}
+  .panel{padding-bottom:env(safe-area-inset-bottom,0px)}
+  .tabs .mob-toggle{display:flex;flex:0 0 38px;align-items:center;justify-content:center;padding:0;border:none;background:var(--ink);color:var(--paper);font:700 17px/1 var(--f-tech);cursor:pointer}
   .status{font-size:10.5px;bottom:12px;left:12px}
   .mtop .l,.mtop .r{display:none}.mtop{grid-template-columns:1fr}
   .mbot{grid-template-columns:1fr;gap:4px}.mbot .decl,.mbot .notes{display:none}
@@ -319,7 +320,7 @@ path.rad3{fill:url(#h-rad3)!important}
     </div>
     <div class="meta">
       <div class="cells" aria-label="Map details">
-        <div><small>Масштаб</small>1:100 000</div><div><small>Листов</small>8</div><div><small>Издания</small>1981–1993</div><div><small>Версия</small>0.7</div>
+        <div><small>Масштаб</small>1:100 000</div><div><small>Листов</small>8</div><div><small>Издания</small>1981–1993</div><div><small>Версия</small>0.7.1</div>
       </div>
       <div class="stamp">Для служебного<br>пользования</div>
     </div>
@@ -343,9 +344,9 @@ path.rad3{fill:url(#h-rad3)!important}
       <button role="tab" aria-selected="false" data-tab="index" id="tab-index"><b>Указатель</b><small>index</small></button>
       <button role="tab" aria-selected="false" data-tab="info" id="tab-info"><b>Объект</b><small>object</small></button>
       <button role="tab" aria-selected="false" data-tab="about" id="tab-about"><b>Справка</b><small>about</small></button>
+      <button class="mob-toggle" id="mobToggle" aria-expanded="true" aria-label="Свернуть панель · collapse panel" title="Свернуть панель · collapse panel">▾</button>
     </div>
     <div class="pbody" id="pbody"></div>
-    <button class="mob-toggle" id="mobToggle">Свернуть панель / collapse</button>
   </aside>
 </div>
 
@@ -362,7 +363,7 @@ const [SITES,VILL,SHEETS,OVERLAYS,PHOTOS0]= D ? [D.sites,D.settlements,D.sheets,
   : await Promise.all([J("data/sites.json"),J("data/settlements.json"),J("data/sheets.json"),J("data/overlays.json").catch(()=>[]),J("data/photos.json").catch(()=>({}))]);
 
 /* ===================== reference point ===================== */
-const VERSION = "0.7";
+const VERSION = "0.7.1";
 /* Suggestions go to the repository's issue forms (.github/ISSUE_TEMPLATE). On *.github.io the repository is detected from the address. */
 const SUGGEST_REPO = "renderedsheep/chernobyl-atlas";
 function repoSlug(){ const m=location.hostname.match(/^([a-z0-9-]+)\.github\.io$/i); const seg=location.pathname.split("/").filter(Boolean)[0];
@@ -494,6 +495,13 @@ const FUEL_TRACE = [U4, off(U4[0],U4[1],2,-100)];
 const map = L.map("map",{zoomControl:false,minZoom:8,maxZoom:16,attributionControl:false,zoomSnap:0.5,preferCanvas:false})
   .setView([51.33,30.02],10);
 map.setMaxBounds([[50.70,28.60],[51.95,31.20]]);
+/* opening view: zoom in just enough that the joined sheets fill the whole frame (no blank margin on large screens) */
+(function fillStart(){ const la=[],ln=[]; SHEETS.forEach(sh=>sh.poly.forEach(p=>{la.push(p[0]);ln.push(p[1]);}));
+  const sw=[Math.min(...la),Math.min(...ln)], ne=[Math.max(...la),Math.max(...ln)], sz=map.getSize(), c0=map.getCenter();
+  for(let z=10; z<=13; z+=0.5){ const a=map.project(L.latLng(ne[0],sw[1]),z), b=map.project(L.latLng(sw[0],ne[1]),z);
+    if(b.x-a.x>=sz.x && b.y-a.y>=sz.y){ const c=map.project(c0,z);
+      c.x=Math.min(Math.max(c.x,a.x+sz.x/2),b.x-sz.x/2); c.y=Math.min(Math.max(c.y,a.y+sz.y/2),b.y-sz.y/2);
+      map.setView(map.unproject(c,z),z,{animate:false}); break; } } })();
 L.control.zoom({position:"topright"}).addTo(map);
 const svgR = L.svg({padding:0.5}).addTo(map);
 
@@ -774,9 +782,9 @@ map.on("click",e=>{ const la=e.latlng.lat, ln=e.latlng.lng, at=llTxt(la,ln), sh=
 /* ===================== panel ===================== */
 const pbody=document.getElementById("pbody");
 let tab="layers", current=null;
-document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
-function showTab(t){tab=t;document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));render();
-  try{localStorage.setItem("cza-tab",t)}catch(e){} document.getElementById("panel").classList.remove("min");}
+document.querySelectorAll(".tabs button[data-tab]").forEach(b=>b.addEventListener("click",()=>showTab(b.dataset.tab)));
+function showTab(t){tab=t;document.querySelectorAll(".tabs button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===t));render();
+  try{localStorage.setItem("cza-tab",t)}catch(e){} const pn=document.getElementById("panel"); if(pn.classList.contains("min")){pn.classList.remove("min"); syncToggle(); setTimeout(()=>map.invalidateSize(),50);}}
 function esc(s){return String(s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));}
 
 function renderLayers(){
@@ -1013,10 +1021,12 @@ function select(id,fly){
   showTab("info");
 }
 
-document.getElementById("mobToggle").addEventListener("click",()=>{const p=document.getElementById("panel");p.classList.toggle("min");document.getElementById("mobToggle").textContent=p.classList.contains("min")?"Развернуть панель / expand":"Свернуть панель / collapse";setTimeout(()=>map.invalidateSize(),50);});
+function syncToggle(){const p=document.getElementById("panel"), t=document.getElementById("mobToggle"), m=p.classList.contains("min"), l=m?"Развернуть панель · expand panel":"Свернуть панель · collapse panel";
+  t.textContent=m?"▴":"▾"; t.setAttribute("aria-expanded",!m); t.setAttribute("aria-label",l); t.title=l;}
+document.getElementById("mobToggle").addEventListener("click",()=>{document.getElementById("panel").classList.toggle("min"); syncToggle(); setTimeout(()=>map.invalidateSize(),50);});
 
 try{const t=localStorage.getItem("cza-tab"); if(["layers","key","index","about"].includes(t)) tab=t;}catch(e){}
-document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+document.querySelectorAll(".tabs button[data-tab]").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
 render(); applyLayers(); applyBaseOp(); gridUpdate(); updateMargins(); map.on("zoomend",()=>{applyLayers();applyBaseOp();});
 setTimeout(()=>{map.invalidateSize();edgeLabels();},60);
 })().catch(e=>{console.error(e); const m=document.getElementById("map");
