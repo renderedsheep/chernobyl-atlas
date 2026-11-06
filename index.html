@@ -242,22 +242,23 @@ button{font-family:inherit;color:inherit}
 
 /* map symbols & labels */
 .sym{display:block;filter:drop-shadow(0 0 1px var(--paper)) drop-shadow(0 0 1px var(--paper))}
-.lbl{position:absolute;white-space:nowrap;font:600 12.5px/1 var(--f-tech);color:var(--ink);text-shadow:0 0 2px var(--paper),0 0 2px var(--paper),0 0 3px var(--paper);pointer-events:none;transform:translate(calc(9px * var(--mks,1)),-50%)}
+.lbl{position:absolute;white-space:nowrap;font:700 13.5px/1.05 var(--f-tech);color:var(--ink);text-shadow:-1.5px -1.5px 0 var(--paper),1.5px -1.5px 0 var(--paper),-1.5px 1.5px 0 var(--paper),1.5px 1.5px 0 var(--paper),0 -1.8px 0 var(--paper),0 1.8px 0 var(--paper),-1.8px 0 0 var(--paper),1.8px 0 0 var(--paper),0 0 4px var(--paper);pointer-events:none;transform:translate(calc(9px * var(--mks,1)),-50%)}
 .lbl.city{font:700 16px var(--f-tech);letter-spacing:.12em;text-transform:uppercase}
 .lbl.town{font:700 13.5px var(--f-tech);letter-spacing:.06em;text-transform:uppercase}
 .lbl.vill{font:500 12.5px var(--f-tech);color:var(--ink-2)}
 .lbl.water{font:italic 14px var(--f-body);color:var(--blue);letter-spacing:.1em;transform:translate(-50%,-50%)}
 .lbl.zone{font:700 12px var(--f-tech);color:var(--red);letter-spacing:.06em;transform:translate(-50%,-50%)}
 .lbl.rad{font:700 11px var(--f-tech);color:var(--violet);transform:translate(-50%,-50%)}
-.lbl.plant{font:700 12px var(--f-tech);color:var(--red)}
+.lbl.plant{font:700 13.5px var(--f-tech);color:var(--red)}
 .lbl .en{display:block;font:11px var(--f-body);letter-spacing:.03em;text-transform:none;color:var(--ink-2);margin-top:2px;font-style:normal}
-.lbl.vill2{font:700 12.5px/1 var(--f-tech);letter-spacing:.02em;color:var(--ink);transform:translate(8px,-50%)}
+.lbl.vill2{font:700 13px/1.05 var(--f-tech);letter-spacing:.02em;color:var(--ink);transform:translate(10px,-50%)}
 .lbl.vill2.un{color:#7a2a1c}
 .lbl .pp{font:600 10.5px var(--f-tech);color:var(--ink-2);letter-spacing:0}
 .lbl.sheetlbl{font:700 15px var(--f-tech);color:var(--red);transform:translate(-50%,0);text-align:center;letter-spacing:.04em}
 .lbl.hide{display:none}
+.lbl.clash{visibility:hidden}
 /* label language: .ru = Russian as printed; .tr = English line; .tri = English inline (ENG mode, settlements) */
-.lbl .tr{display:none;font:400 11px var(--f-body);letter-spacing:.03em;text-transform:none;color:var(--ink-2);margin-top:2px;font-style:normal}
+.lbl .tr{display:none;font:700 12px var(--f-body);letter-spacing:.02em;text-transform:none;color:var(--ink-2);margin-top:2px;font-style:normal}
 .lbl .tri,.lbl .en-x{display:none}
 .lbl.city .tr,.lbl.town .tr,.lbl.rad .tr,.zclose .lbl .tr,.lang-both .lbl .tr{display:block}
 .lbl.zone .tr{display:none}
@@ -510,8 +511,8 @@ const svgR = L.svg({padding:0.5}).addTo(map);
 /* label helper */
 const labels=[];
 function label(latlng,html,cls,minZ,group){
-  const m=L.marker(latlng,{icon:L.divIcon({className:"",html:`<div class="lbl ${cls||""}">${html}</div>`,iconSize:[0,0]}),interactive:false,keyboard:false});
-  m._minZ=minZ||0; labels.push(m); (group||map).addLayer?(group||map).addLayer(m):null; return m;
+  const m=L.marker(latlng,{icon:L.divIcon({className:"",html:`<div class="lbl ${cls||""}">${html}</div>`,iconSize:[0,0]}),interactive:false,keyboard:false,zIndexOffset:1000});
+  const k=(cls||"").split(" ")[0]; m._pri=({city:0,town:1,zone:2,rad:2,sheetlbl:2,plant:3,vill:4,water:5,vill2:7}[k]??3)*100+(minZ||0)+labels.length*1e-4; m._minZ=minZ||0; labels.push(m); (group||map).addLayer?(group||map).addLayer(m):null; return m;
 }
 
 /* ===================== base map: General Staff 1:100 000 sheets ===================== */
@@ -531,7 +532,7 @@ const LAYERS = [
   {id:"zones",ru:"Границы зоны",en:"10 km and 30 km circles, zone outline",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><path d="M1 15 Q13 -3 25 15" stroke="${C.red}" stroke-width="2.4" fill="none" stroke-dasharray="7 3"/></svg>`},
   {id:"grid",ru:"Градусная сетка",en:"10′ latitude/longitude grid",on:false,sw:`<svg class="sw" viewBox="0 0 26 18"><path d="M8 0V18M18 0V18M0 9H26" stroke="${C.ink}" stroke-width=".8" stroke-dasharray="2 2"/></svg>`},
   {id:"kgrid",ru:"Километровая сетка",en:"Kilometre grid, СК-42 (zoom 11+)",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><path d="M1 6H25M1 13H25M8 1V17M18 1V17" stroke="${C.ink}" stroke-width=".9"/><text x="2" y="5" font-size="5" fill="${C.ink}">57</text></svg>`},
-  {id:"villages",ru:"Населённые пункты",en:`${VILL.filter(v=>v.k==="set").length} settlements read from the sheets (zoom 11+)`,on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><circle cx="8" cy="9" r="4.3" fill="#86522e" stroke="${C.ink}" stroke-width=".8"/><circle cx="8" cy="9" r="3.5" fill="#86522e" stroke="#fffaf0" stroke-width="1.2"/><circle cx="19" cy="9" r="4" fill="#86522e" fill-opacity=".45" stroke="${C.red}" stroke-width="1.8" stroke-dasharray="2 1.5"/></svg>`},
+  {id:"villages",ru:"Населённые пункты",en:`${VILL.filter(v=>v.k==="set").length} settlements read from the sheets`,on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><circle cx="8" cy="9" r="4.3" fill="#86522e" stroke="${C.ink}" stroke-width=".8"/><circle cx="8" cy="9" r="3.5" fill="#86522e" stroke="#fffaf0" stroke-width="1.2"/><circle cx="19" cy="9" r="4" fill="#86522e" fill-opacity=".45" stroke="${C.red}" stroke-width="1.8" stroke-dasharray="2 1.5"/></svg>`},
   {id:"water",ru:"Гидрография (вектор)",en:"Sharp water outlines traced from the sheets (zoom 14+)",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><path d="M2 12 C8 2 16 16 24 5 L24 16 L2 16Z" fill="#a4c3db" stroke="${C.blue}" stroke-width="1.2"/></svg>`},
   {id:"settle",ru:"Города и опорные сёла",en:"Towns and key villages with entries",on:true,sw:SYM.vill},
   {id:"plant",ru:"ЧАЭС",en:"Reactors, stores, switchyards, stations",on:true,sw:SYM.reactor},
@@ -547,7 +548,7 @@ const LAYERS = [
   {id:"war",ru:"События",en:"News and noteworthy",on:false,sw:SYM.war},
   {id:"nature",ru:"Природа",en:"Reserves and wildlife",on:false,sw:SYM.nature}
 ];
-const MINZ={villages:11,water:14,kgrid:11};
+const MINZ={villages:9,water:14,kgrid:11};
 LAYERS.forEach(l=>{G[l.id]=L.layerGroup(); ON[l.id]=l.on;});
 try{const sv=JSON.parse(localStorage.getItem("cza-layers")||"null"); if(sv) Object.keys(sv).forEach(k=>{if(k in ON) ON[k]=!!sv[k];});}catch(e){}
 
@@ -589,8 +590,8 @@ VILL.forEach((v,i)=>{
   else { const u=(v.f||[]).includes("u");
     m=L.circleMarker([v.lat,v.lng],{renderer:svgR,radius:u?5.5:5,color:u?C.red:"#fffaf0",weight:u?2:1.8,dashArray:u?"2.2 1.6":null,fillColor:"#86522e",fillOpacity:u?0.45:1}); }
   m.bindTooltip(`${esc(v.n)}${(v.f||[]).includes("u")?" (нежил.)":""}`,{direction:"top",offset:[0,-4],className:"sheet-tip"});
-  m.on("click",e=>{L.DomEvent.stopPropagation(e); selectV(i,false);}); m.addTo(lay); vmarkers[i]=m;
-  label([v.lat,v.lng],`<span class="ru">${esc(v.n)}</span><span class="tri">${esc(v.t||v.n)}</span>${v.p?` <span class="pp">${String(v.p).replace(".",",")}</span>`:""}${(v.f||[]).includes("u")?"<span class='en ru-x'>нежил.</span><span class='en en-x'>uninhabited</span>":""}<span class="tr">${esc(v.t||v.n)}</span>`,"vill2"+((v.f||[]).includes("u")?" un":""),13,lay);
+  m._u=(v.f||[]).includes("u"); m.on("click",e=>{L.DomEvent.stopPropagation(e); selectV(i,false);}); m.addTo(lay); vmarkers[i]=m;
+  label([v.lat,v.lng],`<span class="ru">${esc(v.n)}</span><span class="tri">${esc(v.t||v.n)}</span>${v.p?` <span class="pp">${String(v.p).replace(".",",")}</span>`:""}${(v.f||[]).includes("u")?"<span class='en ru-x'>нежил.</span><span class='en en-x'>uninhabited</span>":""}<span class="tr">${esc(v.t||v.n)}</span>`,"vill2"+((v.f||[]).includes("u")?" un":""),12,lay);
 });
 /* ===================== lines and areas from data/overlays.json ===================== */
 const STYLES={
@@ -643,7 +644,7 @@ SITES.forEach(s=>{
   m.on("click",()=>select(s.id,false));
   m.addTo(lay); markers[s.id]=m;
   const cls = s.lc || (s.cat==="settle"?"vill":"");
-  label([s.lat,s.lng],`<span class="ru">${s.ru}</span><span class="tr">${s.en||s.ru}</span>`,cls==="water"?"water":cls,s.z,lay);
+  m._pri=label([s.lat,s.lng],`<span class="ru">${s.ru}</span><span class="tr">${s.en||s.ru}</span>`,cls==="water"?"water":cls,s.z,lay)._pri;
 });
 // fix divIcon anchor to centre (iconSize:null keeps natural size; centre via CSS)
 const stl=document.createElement("style");stl.textContent=".mk{transform-origin:center} .mk>svg{transform:translate(-50%,-50%) scale(var(--mks,1))}";document.head.appendChild(stl);
@@ -656,11 +657,25 @@ function saveLayers(){try{localStorage.setItem("cza-layers",JSON.stringify(ON));
 function reorder(){ if(map.hasLayer(G.rad)) G.rad.eachLayer(x=>x.bringToBack&&x.bringToBack()); }
 
 /* labels by zoom */
-function zoomLabels(){const z=map.getZoom(), c=map.getContainer(); c.classList.toggle("zclose",z>=14); c.style.setProperty("--mks",z>=13?1.3:z>=12?1.2:z>=11?1.1:1); labels.forEach(m=>{const el=m.getElement&&m.getElement(); if(el){el.firstChild.classList.toggle("hide",z<m._minZ);}});}
-map.on("zoomend layeradd",zoomLabels); zoomLabels();
+function zoomLabels(){const z=map.getZoom(), c=map.getContainer(); c.classList.toggle("zclose",z>=14); c.style.setProperty("--mks",z>=13?1.3:z>=12?1.2:z>=11?1.1:1); labels.forEach(m=>{const el=m.getElement&&m.getElement(); if(el){el.firstChild.classList.toggle("hide",z<m._minZ);}}); declutter();}
+/* settlement dots grow with zoom */
+function dotSize(){const z=map.getZoom(), r=z>=13?7:z>=11?6:z>=10?5:4.2; vmarkers.forEach(m=>{if(m&&m.setRadius) m.setRadius(m._u?r+0.6:r);});}
+/* hide labels that would print on top of a more important one */
+let dcQ=0;
+function declutter(){ if(dcQ) return; dcQ=requestAnimationFrame(()=>{ dcQ=0;
+  const items=[]; labels.forEach(m=>{const el=m.getElement&&m.getElement(); const d=el&&el.firstChild; if(!d) return; d.classList.remove("clash"); if(!d.classList.contains("hide")) items.push([m._pri,d]);});
+  items.sort((a,b)=>a[0]-b[0]); const placed=[];
+  /* site symbols are obstacles too (shrunk a little so a label never clashes with its own symbol); town names ignore them */
+  const icons=[]; Object.values(markers).forEach(mk=>{const el=mk.getElement&&mk.getElement(), sv=el&&el.firstChild; if(!sv||!map.hasLayer(mk)) return; const q=sv.getBoundingClientRect(); if(q.width) icons.push({p:mk._pri,left:q.left+4,right:q.right-4,top:q.top+3,bottom:q.bottom-3});});
+  icons.sort((a,b)=>a.p-b.p); let j=0; const active=[];
+  const over=(r,q,px,py)=>r.left<q.right+px&&r.right>q.left-px&&r.top<q.bottom+py&&r.bottom>q.top-py;
+  items.forEach(([p,d])=>{ while(j<icons.length&&icons[j].p<p) active.push(icons[j++]); const r=d.getBoundingClientRect(); if(!r.width) return;
+    const hit=placed.some(q=>over(r,q,2,1))||(p>=200&&active.some(q=>over(r,q,0,0)));
+    if(hit) d.classList.add("clash"); else placed.push(r); }); }); }
+map.on("zoomend layeradd layerremove",zoomLabels); map.on("zoomend",dotSize); zoomLabels(); dotSize();
 /* label language: ru (as printed, English added at close zoom) · both · en */
 let LANG=(()=>{try{const v=localStorage.getItem("cza-lang");return ["ru","both","en"].includes(v)?v:"ru";}catch(e){return "ru";}})();
-function applyLang(){const c=map.getContainer(); c.classList.remove("lang-ru","lang-both","lang-en"); c.classList.add("lang-"+LANG);}
+function applyLang(){const c=map.getContainer(); c.classList.remove("lang-ru","lang-both","lang-en"); c.classList.add("lang-"+LANG); declutter();}
 applyLang();
 
 /* ===================== kilometre grid (СК-42, Gauss–Krüger) and frame labels ===================== */
@@ -1000,7 +1015,7 @@ function select(id,fly){
 
 document.getElementById("mobToggle").addEventListener("click",()=>{const p=document.getElementById("panel");p.classList.toggle("min");document.getElementById("mobToggle").textContent=p.classList.contains("min")?"Развернуть панель / expand":"Свернуть панель / collapse";setTimeout(()=>map.invalidateSize(),50);});
 
-try{const t=localStorage.getItem("cza-tab"); if(t&&t!=="info") tab=t;}catch(e){}
+try{const t=localStorage.getItem("cza-tab"); if(["layers","key","index","about"].includes(t)) tab=t;}catch(e){}
 document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
 render(); applyLayers(); applyBaseOp(); gridUpdate(); updateMargins(); map.on("zoomend",()=>{applyLayers();applyBaseOp();});
 setTimeout(()=>{map.invalidateSize();edgeLabels();},60);
