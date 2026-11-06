@@ -129,6 +129,16 @@ button{font-family:inherit;color:inherit}
 .mtop .c{font:700 16px/1 var(--f-tech);letter-spacing:.06em;text-align:center;white-space:nowrap}
 .mtop .c small{font:600 11px var(--f-tech);letter-spacing:.02em;margin-left:6px;color:var(--ink-2)}
 .mtop .r{text-align:right}
+/* top margin laid out like the sheets: coordinate system + country line left, issuing body + sheet name centre, nomenclature + edition right */
+.mtop .l{font:600 12px/1.25 var(--f-tech)}
+.mtop .l small{display:block;font:500 10.5px/1.3 var(--f-tech);color:var(--ink-2)}
+.mtop .l b{font-weight:700;letter-spacing:.02em}
+.mtop .l i{font:italic 500 11px var(--f-tech);color:var(--ink-2)}
+.mtop .c small.gs{display:block;margin:0 0 3px;font:700 11.5px/1 var(--f-tech);letter-spacing:.42em;color:var(--ink);padding-left:.42em}
+.mtop .c .mobn{display:none}
+.mtop .r .nom{display:block;font:700 18px/1 var(--f-tech);letter-spacing:.05em}
+.mtop .r small{display:block;margin-top:3px;font:600 11px/1.2 var(--f-tech)}
+.mtop .r .ver{color:var(--ink-2);font-weight:500}
 .mbot{display:grid;grid-template-columns:minmax(0,1.25fr) auto minmax(0,1fr);gap:14px;align-items:start;padding:6px 14px 8px;font:500 11px/1.35 var(--f-tech);color:var(--ink);border-top:0}
 .mbot .decl{display:flex;gap:8px;align-items:flex-start;min-width:0}
 .mbot .decl svg{flex:none}
@@ -294,7 +304,7 @@ path.rad3{fill:url(#h-rad3)!important}
   .panel{padding-bottom:env(safe-area-inset-bottom,0px)}
   .tabs .mob-toggle{display:flex;flex:0 0 38px;align-items:center;justify-content:center;padding:0;border:none;background:var(--ink);color:var(--paper);font:700 17px/1 var(--f-tech);cursor:pointer}
   .status{font-size:10.5px;bottom:12px;left:12px}
-  .mtop .l,.mtop .r{display:none}.mtop{grid-template-columns:1fr}
+  .mtop .l,.mtop .r{display:none}.mtop{grid-template-columns:1fr}.mtop .c small.gs{display:none}.mtop .c .mobn{display:inline}
   .mbot{grid-template-columns:1fr;gap:4px}.mbot .decl,.mbot .notes{display:none}
 }
 @media (prefers-reduced-motion:reduce){.leaflet-zoom-anim .leaflet-zoom-animated{transition:none}}
@@ -752,13 +762,18 @@ function scaleInfo(){
   return {den:denTxt,cm,bar};}
 function updateMargins(){
   const c=map.getCenter(), sh=sheetAt(c.lat,c.lng), sc=scaleInfo();
-  mtop.innerHTML=sh?`<span class="l">${esc(sh.pub)}</span><span class="c">${sh.n} · ${esc(sh.name).toUpperCase()}<small>изд. ${sh.ed} г.</small></span><span class="r">Местность на ${esc(sh.terr)} г. · в. ${VERSION}</span>`
-    :`<span class="l"></span><span class="c">ВНЕ ЛИСТОВ<small>outside the sheets</small></span><span class="r">в. ${VERSION}</span>`;
+  /* country line exactly as printed on each sheet (СССР on the Soviet editions, УКРАИНА/БЕЛАРУСЬ on 1993); state names in bold as on the sheet */
+  const reg=sh&&sh.reg?esc(sh.reg).split(" ").map(w=>/^[А-ЯЁ]{4,}\.?$/.test(w)?`<b>${w}</b>`:w).join(" ")
+    :`<i>поле листа обрезано на этой копии · cut off on this copy</i>`;
+  mtop.innerHTML=sh?`<span class="l"><small>Система координат 1942 г.</small>${reg}</span>`
+      +`<span class="c"><small class="gs">${esc(sh.pub).toUpperCase()}</small>${esc(sh.name).toUpperCase()}<span class="mobn"> · ${sh.n}</span></span>`
+      +`<span class="r"><b class="nom">${sh.n}</b><small>Состояние местности на ${(t=>t+(t.endsWith(".")?"":"."))(esc(sh.terr).replace(/^(\d{4})/,"$1 г."))} Издание ${sh.ed} г. <span class="ver">· атлас в. ${VERSION}</span></small></span>`
+    :`<span class="l"></span><span class="c">ВНЕ ЛИСТОВ<small>outside the sheets</small></span><span class="r"><small><span class="ver">атлас в. ${VERSION}</span></small></span>`;
   const decl=sh&&sh.mag?`Склонение на ${sh.mag.y} г. ${SIDE[sh.mag.d[0]]} ${sh.mag.d.slice(2)}.<br>Сближение меридианов ${SIDE[sh.mag.c[0]]} ${sh.mag.c.slice(2)}.`
     :sh?`Склонение: на этой копии листа ${sh.n} поле обрезано.<br><span style="color:var(--ink-2)">Declination not legible on this scan.</span>`:"";
   mbot.innerHTML=`<div class="decl">${declSVG(sh)}<div>${decl}${sh&&sh.comp?`<div class="code" style="margin-top:3px">${esc(sh.comp)}</div>`:""}</div></div>
    <div class="scale"><div class="den">1:${sc.den}</div><div class="cm">в 1 сантиметре ${sc.cm}</div>${sc.bar}</div>
-   <div class="notes">Система координат 1942 г.<br>Балтийская система высот<br>Сплошные горизонтали проведены через ${sh&&sh.ci?sh.ci:20} метров${sh&&sh.code?`<div class="code">${esc(sh.code)}</div>`:""}</div>`;
+   <div class="notes">Балтийская система высот<br>Сплошные горизонтали проведены через ${sh&&sh.ci?sh.ci:20} метров${sh&&sh.code?`<div class="code">${esc(sh.code)}</div>`:""}</div>`;
 }
 map.on("moveend zoomend resize",updateMargins);
 
@@ -943,7 +958,7 @@ function renderInfo(){
     wireGallery(); return; }
   if(typeof current==="string"&&current.startsWith("sh:")){ const sh=SHEETS.find(x=>x.n===current.slice(3));
     pbody.innerHTML=`<div class="card"><span class="cat">Лист карты</span><h2>${sh.n}</h2><div class="ru">${sh.name}</div>
-    <dl class="facts"><dt>Publisher</dt><dd>${sh.pub}</dd><dt>Edition</dt><dd>${sh.ed}</dd><dt>Terrain as of</dt><dd>${sh.terr}</dd><dt>Scale</dt><dd>1:100 000 · 20′ × 30′</dd><dt>Datum</dt><dd>СК-42 (Pulkovo 1942), shifted about 120 m to WGS 84</dd>${sh.mag?`<dt>Declination</dt><dd>${sh.mag.y}: ${SIDE[sh.mag.d[0]]} ${sh.mag.d.slice(2)}</dd><dt>Convergence</dt><dd>${SIDE[sh.mag.c[0]]} ${sh.mag.c.slice(2)}</dd>`:""}${sh.comp?`<dt>Compiled</dt><dd>${esc(sh.comp)}</dd>`:""}${sh.code?`<dt>Print code</dt><dd>${esc(sh.code)}</dd>`:""}</dl>
+    <dl class="facts"><dt>Publisher</dt><dd>${sh.pub}</dd><dt>Country line</dt><dd>${sh.reg?esc(sh.reg):"cut off on this copy"}</dd><dt>Edition</dt><dd>${sh.ed}</dd><dt>Terrain as of</dt><dd>${sh.terr}</dd><dt>Scale</dt><dd>1:100 000 · 20′ × 30′</dd><dt>Datum</dt><dd>СК-42 (Pulkovo 1942), shifted about 120 m to WGS 84</dd>${sh.mag?`<dt>Declination</dt><dd>${sh.mag.y}: ${SIDE[sh.mag.d[0]]} ${sh.mag.d.slice(2)}</dd><dt>Convergence</dt><dd>${SIDE[sh.mag.c[0]]} ${sh.mag.c.slice(2)}</dd>`:""}${sh.comp?`<dt>Compiled</dt><dd>${esc(sh.comp)}</dd>`:""}${sh.code?`<dt>Print code</dt><dd>${esc(sh.code)}</dd>`:""}</dl>
     <p class="small">${sh.ed==="1993"?"Post-Soviet edition: the header reads «Главный штаб», and abandoned villages carry the note «нежил.» (uninhabited).":"Soviet edition: no evacuation notes, so villages inside the zone still show their pre-accident population."}</p></div>`; return; }
   if(typeof current==="string"&&current.startsWith("v:")){ const v=VILL[+current.slice(2)]; const [d,az]=distBear(U4,[v.lat,v.lng]); const sh=SHEETS.find(x=>x.n===v.sh)||{};
     const f=v.f||[]; const tags=[f.includes("u")?"<b>нежил.</b> uninhabited (1993 sheet)":"",f.includes("ss")?"сельсовет (village council seat)":"",f.includes("rs")?"райцентр (district town)":"",f.includes("pgt")?"посёлок городского типа":""].filter(Boolean).join(" · ");
