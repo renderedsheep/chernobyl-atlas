@@ -2,7 +2,7 @@
 
 **[Open the atlas →](https://renderedsheep.github.io/chernobyl-atlas/)**
 
-**Version 0.7** · November 2026 · Built by Fernand G.
+**Version 0.7.1** · November 2026 · Built by Fernand G.
 
 [![The atlas around Pripyat and the power plant, with the Unit 4 entry open](docs/screenshot.webp)](https://renderedsheep.github.io/chernobyl-atlas/)
 
