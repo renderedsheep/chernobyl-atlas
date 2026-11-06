@@ -1,0 +1,53 @@
+name: "Add a photo · Добавить фото"
+description: Offer a photo of a place on the map.
+title: "[Photo] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. Photos must be your own or under a free licence (for example from Wikimedia Commons), so they can be shown with credit.
+  - type: input
+    id: object
+    attributes:
+      label: Which object is the photo of?
+      description: Filled in for you when you came from the map.
+    validations:
+      required: true
+  - type: textarea
+    id: photo
+    attributes:
+      label: The photo
+      description: Drag the image file into this box, or paste a link to it (for example its Wikimedia Commons page).
+    validations:
+      required: true
+  - type: input
+    id: caption
+    attributes:
+      label: Caption
+      description: What it shows, and the year it was taken if you know it.
+  - type: input
+    id: author
+    attributes:
+      label: Photographer
+      description: The name to credit under the photo.
+    validations:
+      required: true
+  - type: dropdown
+    id: licence
+    attributes:
+      label: Licence
+      options:
+        - It's my own photo, and I agree to share it under CC BY-SA 4.0
+        - CC BY (from another source)
+        - CC BY-SA (from another source)
+        - CC0 or public domain
+        - Not sure
+    validations:
+      required: true
+  - type: checkboxes
+    id: confirm
+    attributes:
+      label: Permission
+      options:
+        - label: I took this photo myself, or it is published under the free licence chosen above.
+          required: true

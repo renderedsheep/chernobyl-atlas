@@ -1,0 +1,529 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Atlas Editor</title>
+<meta name="robots" content="noindex">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Jura:wght@500;600;700&family=PT+Mono&family=PT+Sans+Narrow:wght@400;700&family=Oswald:wght@500;600&display=swap">
+<style>
+/* Layout: map on the left, editing panel on the right; same paper-and-red identity as the atlas. */
+:root{
+  --paper:#f1f1e4;--paper-2:#e6e4d2;--ink:#2a281c;--ink-2:#5c5846;--red:#b3261e;--blue:#395782;--olive:#5f7a24;--violet:#6b3d8f;--rule:#c2bea6;--ok:#2e5f2a;--brown:#86522e;
+  --f-display:"Oswald","PT Sans Narrow","Arial Narrow",sans-serif;--f-body:"PT Sans Narrow","Arial Narrow",Arial,sans-serif;--f-mono:"PT Mono","Courier New",monospace;--f-tech:"Jura","PT Sans Narrow","Arial Narrow",sans-serif;
+  color-scheme:light;
+}
+*{box-sizing:border-box}
+html,body{height:100%;margin:0}
+body{background:var(--paper);color:var(--ink);font:15px var(--f-body);overflow:hidden}
+button,input,select,textarea{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--red);outline-offset:2px}
+[hidden]{display:none!important}
+/* leaflet core subset (1.9.4) */
+.leaflet-pane,.leaflet-marker-icon,.leaflet-tile,.leaflet-tile-container,.leaflet-pane>svg,.leaflet-pane>canvas,.leaflet-zoom-box,.leaflet-image-layer,.leaflet-layer{position:absolute;left:0;top:0}
+.leaflet-container{overflow:hidden;-webkit-tap-highlight-color:transparent;background:var(--paper)}
+.leaflet-tile,.leaflet-marker-icon{-webkit-user-select:none;user-select:none}
+.leaflet-container img.leaflet-tile{max-width:none!important;max-height:none!important}
+.leaflet-tile{visibility:hidden}.leaflet-tile-loaded{visibility:inherit}
+.leaflet-container .leaflet-overlay-pane svg{max-width:none!important;max-height:none!important}
+.leaflet-container.leaflet-touch-drag.leaflet-touch-zoom{touch-action:none}
+.leaflet-pane{z-index:400}.leaflet-tile-pane{z-index:200}.leaflet-overlay-pane{z-index:400}.leaflet-marker-pane{z-index:600}.leaflet-tooltip-pane{z-index:650}
+.leaflet-control{position:relative;z-index:800;pointer-events:auto;float:left;clear:both}
+.leaflet-top,.leaflet-bottom{position:absolute;z-index:1000;pointer-events:none}.leaflet-top{top:0}.leaflet-right{right:0}.leaflet-bottom{bottom:0}.leaflet-left{left:0}
+.leaflet-right .leaflet-control{float:right;margin-right:10px}.leaflet-top .leaflet-control{margin-top:10px}.leaflet-bottom .leaflet-control{margin-bottom:10px}
+.leaflet-zoom-animated{transform-origin:0 0}.leaflet-zoom-anim .leaflet-zoom-animated{transition:transform .25s cubic-bezier(0,0,.25,1)}.leaflet-zoom-anim .leaflet-zoom-hide{visibility:hidden}
+.leaflet-interactive{cursor:pointer}.leaflet-grab{cursor:grab}.leaflet-dragging .leaflet-grab{cursor:grabbing}
+.leaflet-marker-icon,.leaflet-image-layer,.leaflet-pane>svg path,.leaflet-tile-container{pointer-events:none}
+.leaflet-marker-icon.leaflet-interactive,.leaflet-pane>svg path.leaflet-interactive{pointer-events:auto}
+.leaflet-bar{border:1.5px solid var(--ink);background:var(--paper)}
+.leaflet-bar a{display:block;width:32px;height:32px;line-height:30px;text-align:center;text-decoration:none;color:var(--ink);font:700 20px var(--f-mono);border-bottom:1px solid var(--rule)}
+.leaflet-bar a:last-child{border-bottom:none}
+.leaflet-tooltip{position:absolute;padding:2px 7px;background:var(--paper);border:1.5px solid var(--ink);white-space:nowrap;pointer-events:none;font:13px var(--f-body)}
+.leaflet-control-scale-line{border:2px solid var(--ink);border-top:none;padding:2px 5px;font:12px var(--f-mono);background:rgba(241,241,228,.85)}
+.map-crosshair .leaflet-container,.map-crosshair .leaflet-grab{cursor:crosshair}
+
+/* frame */
+.app{display:grid;grid-template-columns:minmax(0,1fr) 400px;grid-template-rows:auto minmax(0,1fr);height:100%}
+.head{grid-column:1/-1;display:flex;align-items:center;gap:12px;flex-wrap:wrap;padding:8px 16px;background-color:var(--red);color:#f8f2e4;border-bottom:3px double var(--ink);background-image:repeating-linear-gradient(90deg,rgba(0,0,0,.075) 0 1px,transparent 1px 56px),repeating-linear-gradient(0deg,rgba(0,0,0,.075) 0 1px,transparent 1px 56px)}
+.head h1{margin:0;font:600 24px/1 var(--f-display);text-transform:uppercase;letter-spacing:.015em}
+.head .sp{flex:1}
+.hbtn{border:2px solid #f6efe2;background:transparent;color:#f6efe2;padding:5px 12px;font:700 12px var(--f-tech);letter-spacing:.06em;text-transform:uppercase;cursor:pointer}
+.hbtn:hover{background:#f6efe2;color:var(--red)}
+.hbtn.primary{background:#f6efe2;color:var(--red)}
+.hbtn:disabled{opacity:.45;cursor:default}
+.state{font:600 12px/1.3 var(--f-tech);max-width:360px}
+.dirty{display:inline-block;width:9px;height:9px;border-radius:50%;background:#ffd23f;margin-right:5px;vertical-align:1px}
+#map{position:relative;min-width:0;border-right:2px solid var(--ink)}
+.modebar{position:absolute;left:50%;top:10px;transform:translateX(-50%);z-index:1200;background:var(--ink);color:var(--paper);padding:7px 12px;font:14px var(--f-body);display:flex;gap:10px;align-items:center;box-shadow:3px 3px 0 rgba(0,0,0,.25)}
+.modebar button{background:var(--paper);color:var(--ink);border:none;padding:3px 9px;font:700 12px var(--f-body);text-transform:uppercase;letter-spacing:.05em;cursor:pointer}
+.coords{position:absolute;left:10px;bottom:10px;z-index:1100;background:rgba(241,241,228,.94);border:1.5px solid var(--ink);padding:3px 8px;font:600 12px var(--f-tech)}
+.show{position:absolute;left:10px;top:10px;z-index:1100;background:rgba(241,241,228,.95);border:1.5px solid var(--ink);padding:5px 9px;font:13px var(--f-body);display:flex;flex-direction:column;gap:2px}
+.show label{display:flex;gap:6px;align-items:center;cursor:pointer}
+
+.panel{background:var(--paper-2);display:flex;flex-direction:column;min-height:0;min-width:0}
+.tabs{display:flex;border-bottom:2px solid var(--ink)}
+.tabs button{flex:1;background:none;border:none;border-right:1px solid var(--rule);padding:7px 2px 6px;cursor:pointer;color:var(--ink-2);display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.05;min-width:0}
+.tabs button b{font:700 12px var(--f-tech);text-transform:uppercase;letter-spacing:.04em}
+.tabs button small{font:10.5px var(--f-mono);letter-spacing:.02em;text-transform:lowercase;opacity:.8}
+.tabs button:last-child{border-right:none}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.pbody{overflow:auto;flex:1;min-height:0;padding:12px 16px 30px}
+h2{font:500 19px var(--f-display);color:var(--red);margin:2px 0 8px}
+h3{font:700 12px var(--f-tech);text-transform:uppercase;letter-spacing:.09em;color:var(--ink-2);border-bottom:1px solid var(--rule);padding-bottom:3px;margin:16px 0 8px}
+p{margin:0 0 8px;line-height:1.4}
+.small{font-size:13.5px}.muted{color:var(--ink-2)}
+.btn{border:1.5px solid var(--ink);background:var(--paper);padding:5px 10px;font:700 12px var(--f-tech);letter-spacing:.05em;text-transform:uppercase;cursor:pointer}
+.btn:hover{background:var(--ink);color:var(--paper)}
+.btn.red{border-color:var(--red);color:var(--red)}.btn.red:hover{background:var(--red);color:#fff}
+.btn.go{background:var(--ink);color:var(--paper)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.search{width:100%;padding:7px 9px;border:1.5px solid var(--ink);background:var(--paper);margin:6px 0}
+.list{display:flex;flex-direction:column}
+.li{display:flex;gap:8px;align-items:center;text-align:left;background:none;border:none;border-bottom:1px dotted var(--rule);padding:5px 2px;cursor:pointer;width:100%}
+.li:hover{background:var(--paper)}
+.li .chip{font:600 10.5px var(--f-tech);background:var(--ink);color:var(--paper);padding:0 5px;white-space:nowrap}
+.li .ru{margin-left:auto;color:var(--ink-2);font-size:13px;text-align:right}
+.li .nm{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.f{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+.f>span{font:700 11.5px var(--f-tech);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-2)}
+.f>small{font:12px var(--f-body);color:var(--ink-2)}
+.f input,.f select,.f textarea{border:1.5px solid var(--ink);background:var(--paper);padding:6px 8px;width:100%}
+.f textarea{min-height:90px;resize:vertical;line-height:1.35}
+.f input[readonly]{background:var(--paper-2);color:var(--ink-2)}
+.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.chk{display:flex;gap:12px;flex-wrap:wrap}.chk label{display:flex;gap:4px;align-items:center}
+.ph{display:grid;grid-template-columns:88px minmax(0,1fr);gap:8px;border:1px solid var(--rule);background:var(--paper);padding:6px;margin-bottom:8px}
+.ph img{width:88px;height:66px;object-fit:cover;display:block;background:var(--paper-2)}
+.ph .pf{display:flex;flex-direction:column;gap:3px}
+.ph input{border:1px solid var(--rule);background:#fbfaf4;padding:3px 5px;font-size:13px;width:100%}
+.ph .pb{display:flex;gap:4px;margin-top:4px}
+.ph .pb button{border:1px solid var(--ink);background:var(--paper-2);font:700 12px var(--f-mono);padding:1px 7px;cursor:pointer}
+.new{font:10.5px var(--f-mono);color:var(--red)}
+.msg{border:1.5px solid var(--ink);background:var(--paper);padding:8px 10px;margin:8px 0;font-size:14px}
+.msg.err{border-color:var(--red);color:var(--red)}
+.msg.ok{border-color:var(--ok);color:var(--ok)}
+.help li{margin-bottom:6px;line-height:1.4}
+kbd{font:12px var(--f-mono);border:1px solid var(--ink-2);padding:0 4px;background:var(--paper)}
+/* map markers */
+.ed-mk{display:block}
+.ed-mk div{width:12px;height:12px;border:2px solid #fff;box-shadow:0 0 0 1px var(--ink)}
+.ed-mk.set div{border-radius:50%;background:var(--brown);width:10px;height:10px}
+.ed-mk.poi div{background:var(--blue);transform:rotate(45deg);width:9px;height:9px}
+.ed-mk.sel div{box-shadow:0 0 0 2px var(--red),0 0 0 6px rgba(179,38,30,.3);width:16px;height:16px}
+.ed-v div{width:11px;height:11px;background:#fff;border:2px solid var(--red);border-radius:50%}
+.ed-mid div{width:9px;height:9px;background:rgba(255,255,255,.7);border:1.5px dashed var(--red);border-radius:50%}
+.dlg{position:fixed;inset:0;background:rgba(20,18,16,.55);z-index:5000;display:flex;align-items:center;justify-content:center;padding:16px}
+.dlg>div{background:var(--paper);border:2px solid var(--ink);max-width:460px;padding:16px 18px;box-shadow:6px 6px 0 rgba(0,0,0,.3)}
+@media (max-width:900px){.app{grid-template-columns:1fr;grid-template-rows:auto 45vh minmax(0,1fr)}#map{border-right:none;border-bottom:2px solid var(--ink)}}
+</style>
+</head>
+<body>
+<div class="app">
+  <header class="head">
+    <svg class="emb" style="width:44px;height:30px;color:#f8f2e4;flex:none" viewBox="0 0 96 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="miter" stroke-linecap="square">
+  <path d="M2 62H94"/>
+  <path d="M5 62V47H39V62M5 51H39"/>
+  <path d="M39 62V39H50V62"/>
+  <path d="M50 62V31H76V36H80V44H84V52H88V62"/>
+  <path d="M50 36H59M68 36H76"/>
+  <path d="M60.5 31L62.6 3H66.4L68.5 31"/>
+  <path d="M62.2 8H66.8M61.8 14H67.2M61.3 21H67.7"/>
+  <path d="M58.5 18H70.5"/>
+</g></svg><h1>Редактор атласа</h1><span class="state" style="opacity:.85">в. 0.7</span>
+    <span class="state" id="state">Loading…</span>
+    <span class="sp"></span>
+    <button class="hbtn" id="bUndo" title="Undo (Ctrl+Z)" disabled>↶ Undo</button>
+    <button class="hbtn" id="bOpen">Open folder</button>
+    <button class="hbtn primary" id="bSave" disabled>Save</button>
+  </header>
+  <div id="map">
+    <div class="show" id="show">
+      <label><input type="checkbox" id="sh-sites" checked> Sites</label>
+      <label><input type="checkbox" id="sh-set" checked> Settlements</label>
+      <label><input type="checkbox" id="sh-ov" checked> Lines and areas</label>
+    </div>
+    <div class="coords" id="coords">—</div>
+    <div class="modebar" id="modebar" hidden></div>
+  </div>
+  <aside class="panel">
+    <div class="tabs" role="tablist">
+      <button data-tab="sites" aria-selected="true"><b>Объекты</b><small>sites</small></button>
+      <button data-tab="set" aria-selected="false"><b>Сёла</b><small>settlements</small></button>
+      <button data-tab="ov" aria-selected="false"><b>Линии</b><small>lines</small></button>
+      <button data-tab="help" aria-selected="false"><b>Справка</b><small>help</small></button>
+    </div>
+    <div class="pbody" id="pbody"></div>
+  </aside>
+</div>
+
+<script src="data/atlas-data.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.js"></script>
+<script>
+(function(){
+"use strict";
+/* ---------------- reference tables (keep in sync with index.html) ---------------- */
+const CATS={plant:"ЧАЭС — промплощадка · Power plant site",waste:"Обращение с РАО · Radioactive waste",pripyat:"Припять · Pripyat landmarks",settle:"Населённые пункты · Settlements (with entries)",
+  liq:"Ликвидация 1986 · Liquidation",mil:"Военные объекты · Military site or relic",mem:"Памятники · Memorials",check:"КПП · Checkpoints",hot:"Радиационные пятна · Hotspots",war:"События · News and noteworthy",nature:"Природа · Nature"};
+const CATCOL={plant:"#b3261e",waste:"#e0b400",pripyat:"#d9483b",settle:"#231f1b",liq:"#5b544b",mil:"#c8102e",mem:"#231f1b",check:"#7a6a50",hot:"#6b3d8f",war:"#b3261e",nature:"#5f7a24"};
+const SYMS={"":"(category default)",reactor:"Reactor square",plantobj:"Plant building",station:"Railway station",waste:"Radiation trefoil",city:"Town square",vill:"Village ring (evacuated)",live:"Village dot (inhabited)",poi:"Red dot",mil:"Red star",graveyard:"Liquidation box",memorial:"Monument",check:"Checkpoint bar",hot:"Hotspot triangle",war:"Diamond (news)",nature:"Tree"};
+const STYLES={road:"Road",track:"Dirt track",rail:"Railway",boundary:"Boundary (dash-dot)",fence:"Fence (short dashes)",red:"Red line",pipe:"Pipeline / power line",
+  area:"Area, red outline",built:"Built-up area",forest:"Forest",water:"Water",rad1:"Radiation > 1480 kBq/m²",rad2:"Radiation 555–1480 kBq/m²",rad3:"Radiation 185–555 kBq/m²"};
+const LINESTYLES=["road","track","rail","boundary","fence","red","pipe"];
+const LAYERS={shapes:"Контуры и линии (own layer)",rad:"Радиация",liq:"Ликвидация 1986",plant:"ЧАЭС",waste:"Обращение с РАО",pripyat:"Припять",mil:"Военные объекты",war:"События",nature:"Природа",zones:"Границы зоны",notes:"Отметки на листах"};
+const STROKE={road:["#d9663c",3],track:["#231f1b",1.6,"6 4"],rail:["#231f1b",3,"7 7"],boundary:["#b3261e",2.2,"10 4 2 4"],fence:["#b3261e",1.6,"3 3"],red:["#b3261e",2.4],pipe:["#231f1b",1.6,"1 5"],
+  area:["#b3261e",1.6,null,"#b3261e",.1],built:["#231f1b",1.2,null,"#c7bfa6",.6],forest:["#5f7a24",1.2,null,"#5f7a24",.3],water:["#395782",1,null,"#a4c3db",.85],
+  rad1:["#b3261e",1.4,null,"#b3261e",.3],rad2:["#6b3d8f",1.4,null,"#6b3d8f",.22],rad3:["#6b3d8f",1,"4 3","#6b3d8f",.12]};
+const BOUNDS=[[50.95843,28.82812],[51.72703,31.11328]];
+
+/* ---------------- state ---------------- */
+let D=null, dir=null, dirty=false, undo=[], tab="sites", sel=null, mode=null;
+const newFiles=new Map(), blobURL=new Map(), delFiles=new Set();
+const $=s=>document.querySelector(s), pbody=$("#pbody");
+const esc=s=>String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
+function setState(t,cls){$("#state").innerHTML=(dirty?'<span class="dirty" title="Unsaved changes"></span>':"")+t;}
+function stateLine(){ if(!D) return; setState(`${D.sites.length} sites · ${D.settlements.length} settlements · ${D.overlays.length} lines/areas${dir?` · folder: ${esc(dir.name)}`:""}${dirty?" · <b>unsaved</b>":""}`); }
+function touch(){dirty=true; $("#bSave").disabled=false; stateLine();}
+function snap(){ undo.push(JSON.stringify(D)); if(undo.length>60) undo.shift(); $("#bUndo").disabled=false; }
+function doUndo(){ if(!undo.length) return; D=JSON.parse(undo.pop()); $("#bUndo").disabled=!undo.length; touch(); if(sel&&!getItem(sel)) sel=null; drawAll(); render(); }
+window.addEventListener("beforeunload",e=>{ if(dirty){e.preventDefault(); e.returnValue="";} });
+
+/* ---------------- map ---------------- */
+const map=L.map("map",{zoomControl:false,minZoom:8,maxZoom:17,zoomSnap:.5,doubleClickZoom:false,attributionControl:false}).fitBounds([[51.08,29.6],[51.62,30.6]]);
+L.control.zoom({position:"topright"}).addTo(map); L.control.scale({position:"bottomright",imperial:false}).addTo(map);
+L.tileLayer("tiles/{z}/{x}/{y}.webp",{tileSize:1024,zoomOffset:-2,minZoom:8,maxZoom:17,minNativeZoom:8,maxNativeZoom:13,bounds:BOUNDS}).addTo(map);
+["#show","#coords","#modebar"].forEach(q=>{const el=document.querySelector(q); L.DomEvent.disableClickPropagation(el); L.DomEvent.disableScrollPropagation(el);});
+const ovLayer={};
+const gSites=L.layerGroup().addTo(map), gSet=L.layerGroup().addTo(map), gOv=L.layerGroup().addTo(map), gEdit=L.layerGroup().addTo(map);
+map.on("mousemove",e=>{$("#coords").textContent=`${e.latlng.lat.toFixed(5)}, ${e.latlng.lng.toFixed(5)} · zoom ${map.getZoom()}`;});
+["sites","set","ov"].forEach(k=>$("#sh-"+k).addEventListener("change",drawAll));
+const R5=x=>Math.round(x*1e5)/1e5;
+
+function icon(cls,color){return L.divIcon({className:"ed-mk "+cls,html:`<div style="${color?`background:${color}`:""}"></div>`,iconSize:[16,16],iconAnchor:[8,8]});}
+function getItem(s){ if(!s||!D) return null;
+  if(s.kind==="site") return D.sites.find(x=>x.id===s.id); if(s.kind==="set") return D.settlements[s.i]; return D.overlays.find(x=>x.id===s.id);}
+
+function drawAll(){
+  for(const k in ovLayer) delete ovLayer[k]; gSites.clearLayers(); gSet.clearLayers(); gOv.clearLayers(); gEdit.clearLayers(); if(!D) return;
+  if($("#sh-ov").checked) D.overlays.forEach(o=>{ if(!o.pts||o.pts.length<2) return; const st=STROKE[o.style]||STROKE.red, isSel=sel&&sel.kind==="ov"&&sel.id===o.id;
+    const opt={color:st[0],weight:isSel?st[1]+2:st[1],dashArray:st[2]||null,fillColor:st[3]||st[0],fillOpacity:o.type==="area"?(st[4]??.1):0,fill:o.type==="area"};
+    const l=(o.type==="area"?L.polygon(o.pts,opt):L.polyline(o.pts,opt)).bindTooltip(esc(o.ru||o.en||o.id),{sticky:true});
+    l.on("click",e=>{ if(mode) return; L.DomEvent.stopPropagation(e); select({kind:"ov",id:o.id});}); l.addTo(gOv); ovLayer[o.id]=l; });
+  if($("#sh-set").checked) D.settlements.forEach((v,i)=>{ const isSel=sel&&sel.kind==="set"&&sel.i===i;
+    const m=L.marker([v.lat,v.lng],{icon:icon((v.k==="poi"?"poi":"set")+(isSel?" sel":"")),title:v.n,zIndexOffset:isSel?1000:0}).addTo(gSet);
+    m.on("click",e=>{ if(mode) return; L.DomEvent.stopPropagation(e); select({kind:"set",i});});
+    if(isSel) makeDraggable(m,v); });
+  if($("#sh-sites").checked) D.sites.forEach(s=>{ const isSel=sel&&sel.kind==="site"&&sel.id===s.id;
+    const m=L.marker([s.lat,s.lng],{icon:icon("site"+(isSel?" sel":""),CATCOL[s.cat]),title:s.en,zIndexOffset:isSel?1000:500}).addTo(gSites);
+    m.on("click",e=>{ if(mode) return; L.DomEvent.stopPropagation(e); select({kind:"site",id:s.id});});
+    if(isSel) makeDraggable(m,s); });
+  if(sel&&sel.kind==="ov"){ const o=getItem(sel); if(o) drawHandles(o); }
+}
+function makeDraggable(m,obj){ m.dragging&&m.dragging.enable();
+  m.on("dragstart",()=>snap());
+  m.on("dragend",()=>{const p=m.getLatLng(); obj.lat=R5(p.lat); obj.lng=R5(p.lng); if(obj.sh!==undefined) obj.sh=nomen(obj.lat,obj.lng); touch(); fillLatLng(obj);}); }
+function fillLatLng(obj){ const a=pbody.querySelector('[data-k="lat"]'), b=pbody.querySelector('[data-k="lng"]'), c=pbody.querySelector('[data-k="sh"]');
+  if(a) a.value=obj.lat; if(b) b.value=obj.lng; if(c&&obj.sh!==undefined) c.value=obj.sh; }
+
+/* vertex handles for the selected line/area */
+function drawHandles(o){
+  const vi=L.divIcon({className:"ed-v",html:"<div></div>",iconSize:[15,15],iconAnchor:[7.5,7.5]}), mi=L.divIcon({className:"ed-mid",html:"<div></div>",iconSize:[13,13],iconAnchor:[6.5,6.5]});
+  o.pts.forEach((p,i)=>{ const h=L.marker(p,{icon:vi,zIndexOffset:2000,title:"Drag to move · double-click or right-click to delete"}).addTo(gEdit); h.dragging.enable();
+    h.on("dragstart",()=>snap()); h.on("drag",()=>{const q=h.getLatLng(); o.pts[i]=[R5(q.lat),R5(q.lng)]; liveShape(o);});
+    h.on("dragend",()=>{touch(); drawAll(); render();});
+    const del=e=>{L.DomEvent.stopPropagation(e); const min=o.type==="area"?3:2; if(o.pts.length<=min){flash("A "+(o.type==="area"?"area needs 3":"line needs 2")+" points at least.","err");return;} snap(); o.pts.splice(i,1); touch(); drawAll(); render();};
+    h.on("dblclick",del); h.on("contextmenu",del); });
+  const n=o.pts.length, segs=o.type==="area"?n:n-1;
+  for(let i=0;i<segs;i++){ const a=o.pts[i], b=o.pts[(i+1)%n]; const m=L.marker([(a[0]+b[0])/2,(a[1]+b[1])/2],{icon:mi,zIndexOffset:1900,title:"Drag to add a point"}).addTo(gEdit); m.dragging.enable();
+    m.on("dragstart",()=>{snap(); o.pts.splice(i+1,0,[a[0],a[1]]);}); m.on("drag",()=>{const q=m.getLatLng(); o.pts[i+1]=[R5(q.lat),R5(q.lng)]; liveShape(o);});
+    m.on("dragend",()=>{touch(); drawAll(); render();}); }
+}
+function liveShape(o){ const l=ovLayer[o.id]; if(l) l.setLatLngs(o.pts); }
+
+/* ---------------- modes: place a point / draw a shape ---------------- */
+function setMode(m){ mode=m; const bar=$("#modebar");
+  document.body.classList.toggle("map-crosshair",!!m);
+  if(!m){bar.hidden=true; bar.innerHTML=""; return;}
+  bar.hidden=false;
+  if(m.type==="place") bar.innerHTML=`Click the map to place <b>${esc(m.label)}</b> <button id="mCancel">Cancel</button>`;
+  else bar.innerHTML=`Click to add points (${m.obj.pts.length}) · <kbd>Enter</kbd> finish · <kbd>Esc</kbd> cancel <button id="mDone">Finish</button><button id="mUndo">Remove last</button><button id="mCancel">Cancel</button>`;
+  bar.querySelector("#mCancel").onclick=cancelMode; const d=bar.querySelector("#mDone"); if(d) d.onclick=finishDraw; const u=bar.querySelector("#mUndo"); if(u) u.onclick=()=>{m.obj.pts.pop(); drawTemp(); setMode(m);};
+}
+let temp=null;
+function drawTemp(){ if(temp){map.removeLayer(temp);temp=null;} if(!mode||mode.type!=="draw") return; const o=mode.obj; if(!o.pts.length) return;
+  const st=STROKE[o.style]||STROKE.red; temp=(o.type==="area"&&o.pts.length>2?L.polygon(o.pts,{color:st[0],weight:2,dashArray:"4 4",fillOpacity:.1}):L.polyline(o.pts,{color:st[0],weight:2,dashArray:"4 4"})).addTo(map); }
+map.on("click",e=>{ if(!mode) return; const p=[R5(e.latlng.lat),R5(e.latlng.lng)];
+  if(mode.type==="place"){ snap(); const o=mode.obj; o.lat=p[0]; o.lng=p[1]; if(o.sh!==undefined) o.sh=nomen(p[0],p[1]); const after=mode.after; setMode(null); touch(); if(after) after(); drawAll(); render(); }
+  else { mode.obj.pts.push(p); drawTemp(); setMode(mode); } });
+function finishDraw(){ const o=mode.obj, min=o.type==="area"?3:2; if(o.pts.length<min){flash(`Add at least ${min} points first.`,"err");return;}
+  if(!mode.restore) snap(); D.overlays.push(o); setMode(null); drawTemp(); touch(); sel={kind:"ov",id:o.id}; tab="ov"; drawAll(); render(); }
+function cancelMode(){ if(mode&&mode.restore){ D.overlays.push(mode.obj); } setMode(null); drawTemp(); drawAll(); render(); }
+document.addEventListener("keydown",e=>{
+  if(e.key==="Escape"&&mode) cancelMode();
+  else if(e.key==="Enter"&&mode&&mode.type==="draw"&&!/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) finishDraw();
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"&&!/INPUT|TEXTAREA/.test(e.target.tagName)){e.preventDefault(); doUndo();}
+  else if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault(); save();} });
+
+/* ---------------- helpers ---------------- */
+function nomen(lat,lng){const z=lng<30?35:36,c=Math.floor((lng-(z===35?24:30))/.5)+1,r=Math.floor((52-lat)/(1/3))+1;return (r>=1&&r<=12&&c>=1&&c<=12)?`M-${z}-${(r-1)*12+c}`:"—";}
+const TR={а:"a",б:"b",в:"v",г:"g",д:"d",е:"e",ё:"yo",ж:"zh",з:"z",и:"i",й:"y",к:"k",л:"l",м:"m",н:"n",о:"o",п:"p",р:"r",с:"s",т:"t",у:"u",ф:"f",х:"kh",ц:"ts",ч:"ch",ш:"sh",щ:"shch",ъ:"",ы:"y",ь:"",э:"e",ю:"yu",я:"ya",і:"i",ї:"yi",є:"ye",ґ:"g"};
+function translit(s){return [...s].map(ch=>{const l=ch.toLowerCase(),t=TR[l]; if(t===undefined) return ch; return ch!==l?t.charAt(0).toUpperCase()+t.slice(1):t;}).join("");}
+function uid(base){let b=(base||"item").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"").slice(0,24)||"item", id=b, n=2;
+  const used=new Set([...D.sites.map(x=>x.id),...D.overlays.map(x=>x.id)]); while(used.has(id)) id=b+"-"+(n++); return id;}
+function flash(t,cls){ const m=document.createElement("div"); m.className="msg "+(cls||""); m.textContent=t; pbody.prepend(m); pbody.scrollTop=0; setTimeout(()=>m.remove(),6000); }
+function photoKey(s,obj){ return s.kind==="site"?obj.id:s.kind==="set"?"set:"+obj.n:"ov:"+obj.id; }
+function imgSrc(f){ return blobURL.get(f)||f; }
+
+/* ---------------- panel ---------------- */
+document.querySelectorAll(".tabs button").forEach(b=>b.addEventListener("click",()=>{ if(tab!==b.dataset.tab) q=""; tab=b.dataset.tab; sel=null; drawAll(); render();}));
+let q="";
+function render(){
+  document.querySelectorAll(".tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.tab===tab));
+  if(tab==="help") return renderHelp();
+  if(!D){ pbody.innerHTML=`<p>No data loaded. Click <b>Open folder</b> and choose the atlas folder.</p>`; return; }
+  if(sel&&getItem(sel)) return renderForm();
+  renderList();
+}
+function renderList(){
+  const kind=tab==="sites"?"site":tab==="set"?"set":"ov";
+  let items, add;
+  if(kind==="site"){ items=D.sites.map(s=>({s:{kind,id:s.id},nm:s.en,ru:s.ru,chip:s.cat})); add=`<button class="btn go" id="addSite">+ New site</button>`; }
+  else if(kind==="set"){ items=D.settlements.map((v,i)=>({s:{kind,i},nm:v.n,ru:v.t,chip:v.k==="poi"?"note":(v.f||[]).includes("u")?"нежил.":"село"})); add=`<button class="btn go" id="addSet">+ New settlement</button> <button class="btn" id="addNote">+ New sheet note</button>`; }
+  else { items=D.overlays.map(o=>({s:{kind,id:o.id},nm:o.en||o.ru||o.id,ru:o.ru,chip:o.type})); add=`<button class="btn go" id="addLine">+ Draw line</button> <button class="btn go" id="addArea">+ Draw area</button>`; }
+  const t=q.toLowerCase();
+  const f=items.filter(x=>!t||(x.nm+" "+(x.ru||"")+" "+x.chip).toLowerCase().includes(t)).sort((a,b)=>String(a.nm).localeCompare(String(b.nm),"ru"));
+  pbody.innerHTML=`<h2>${kind==="site"?"Объекты · sites":kind==="set"?"Сёла · settlements":"Линии и контуры · lines and areas"}</h2>
+   <div class="row">${add}</div>
+   <input class="search" id="q" type="search" placeholder="Search ${items.length} items" value="${esc(q)}" aria-label="Search">
+   <div class="list">${f.map((x,j)=>`<button class="li" data-j="${j}"><span class="chip">${esc(x.chip)}</span><span class="nm">${esc(x.nm)}</span><span class="ru">${esc(x.ru||"")}</span></button>`).join("")||`<p class="muted">${items.length?"Nothing matches.":kind==="ov"?"No lines or areas yet. Draw one with the buttons above.":"Empty."}</p>`}</div>`;
+  const qi=pbody.querySelector("#q"); qi.addEventListener("input",()=>{q=qi.value; const pos=qi.selectionStart; renderList(); const n=pbody.querySelector("#q"); n.focus(); n.setSelectionRange(pos,pos);});
+  pbody.querySelectorAll(".li").forEach(b=>b.addEventListener("click",()=>select(f[+b.dataset.j].s,true)));
+  const c=map.getCenter(), C0=[R5(c.lat),R5(c.lng)];
+  const on=(id,fn)=>{const e=pbody.querySelector("#"+id); if(e) e.onclick=fn;};
+  on("addSite",()=>{ const s={id:uid("new-site"),cat:"pripyat",lat:C0[0],lng:C0[1],p:"est",acc:"±200 m",z:13,en:"New site",ru:"",d:"",src:""};
+    setMode({type:"place",obj:s,label:"the new site",after:()=>{D.sites.push(s); sel={kind:"site",id:s.id};}}); });
+  on("addSet",()=>{ const v={n:"Новое село",t:"Novoye selo",lat:C0[0],lng:C0[1],sh:"",k:"set"};
+    setMode({type:"place",obj:v,label:"the new settlement",after:()=>{D.settlements.push(v); sel={kind:"set",i:D.settlements.length-1};}}); });
+  on("addNote",()=>{ const v={n:"Отметка",t:"Note",lat:C0[0],lng:C0[1],sh:"",k:"poi",d:""};
+    setMode({type:"place",obj:v,label:"the new note",after:()=>{D.settlements.push(v); sel={kind:"set",i:D.settlements.length-1};}}); });
+  on("addLine",()=>{ setMode({type:"draw",obj:{id:uid("line"),type:"line",style:"red",layer:"shapes",ru:"",en:"New line",d:"",pts:[]}}); });
+  on("addArea",()=>{ setMode({type:"draw",obj:{id:uid("area"),type:"area",style:"area",layer:"shapes",ru:"",en:"New area",d:"",pts:[]}}); });
+}
+function select(s,fly){ sel=s; tab=s.kind==="site"?"sites":s.kind==="set"?"set":"ov"; drawAll(); render();
+  const o=getItem(s); if(fly&&o){ if(o.pts) map.flyToBounds(L.latLngBounds(o.pts),{maxZoom:15,duration:.6}); else map.flyTo([o.lat,o.lng],Math.max(map.getZoom(),13),{duration:.6}); } }
+
+/* form field definitions */
+const F_SITE=[
+  {k:"en",l:"Name (English)",req:1},{k:"ru",l:"Name (Russian)"},
+  {k:"cat",l:"Category",t:"sel",o:CATS,h:"Decides the layer it sits on and its default symbol."},
+  {k:"sym",l:"Symbol",t:"sel",o:SYMS},
+  {k:"d",l:"Description",t:"area"},
+  {g:[{k:"lat",l:"Latitude",t:"num"},{k:"lng",l:"Longitude",t:"num"}]},
+  {g:[{k:"p",l:"Position source",t:"sel",o:{pub:"Published coordinates",map:"Read from map sheet",est:"Estimated"}},{k:"acc",l:"Accuracy note",h:"e.g. ±150 m"}]},
+  {g:[{k:"z",l:"Label from zoom",t:"sel",o:Object.fromEntries([8,9,10,11,12,13,14,15,16].map(n=>[n,String(n)]))},{k:"lc",l:"Label style",t:"sel",o:{"":"Normal (no label)",city:"City",town:"Town",plant:"Red",vill:"Village",water:"Water"}}]},
+  {k:"src",l:"Sources",h:"Plain text. Write “Wikipedia” and it becomes the Wikipedia link below."},
+  {k:"wiki",l:"Wikipedia link",h:"Full address, e.g. https://en.wikipedia.org/wiki/Pripyat"},
+  {k:"links",l:"Extra links",t:"links",h:"One per line:  Title | https://address"},
+  {k:"id",l:"ID",h:"Short unique code, letters/numbers/dashes. Changing it is safe; photos follow."}
+];
+const F_SET=[
+  {k:"n",l:"Name (Russian, as on the sheet)",req:1},{k:"t",l:"Name (Latin)",h:"Leave blank and press Tab in the name field to fill it automatically."},
+  {k:"k",l:"Type",t:"sel",o:{set:"Settlement",poi:"Note printed on the sheet"}},
+  {k:"d",l:"Note / description",t:"area"},
+  {g:[{k:"lat",l:"Latitude",t:"num"},{k:"lng",l:"Longitude",t:"num"}]},
+  {g:[{k:"p",l:"Population (thousands)",t:"num",h:"0,35 on the sheet = 0.35"},{k:"h",l:"Houses (дворов)",t:"num"}]},
+  {k:"f",l:"Flags",t:"flags"},
+  {k:"sh",l:"Map sheet",ro:1,h:"Filled in from the position."}
+];
+const F_OV=[
+  {k:"en",l:"Name (English)"},{k:"ru",l:"Name (Russian)",h:"If filled, shown as a label on the map."},
+  {k:"style",l:"Style",t:"sel",o:null},
+  {k:"layer",l:"Show in layer",t:"sel",o:LAYERS},
+  {k:"z",l:"Label from zoom",t:"sel",o:Object.fromEntries([9,10,11,12,13,14,15].map(n=>[n,String(n)]))},
+  {k:"d",l:"Description",t:"area"},{k:"src",l:"Sources"},{k:"wiki",l:"Wikipedia link"},
+  {k:"id",l:"ID",h:"Short unique code."}
+];
+function fieldHTML(fd,o){
+  if(fd.g) return `<div class="two">${fd.g.map(x=>fieldHTML(x,o)).join("")}</div>`;
+  const v=o[fd.k], id="fld-"+fd.k, hint=fd.h?`<small>${esc(fd.h)}</small>`:"";
+  let inp;
+  if(fd.t==="sel"){ let opts=fd.o; if(fd.k==="style") opts=Object.fromEntries(Object.entries(STYLES).filter(([k])=>(o.type==="line")===LINESTYLES.includes(k)));
+    inp=`<select id="${id}" data-k="${fd.k}">${Object.entries(opts).map(([k,l])=>`<option value="${esc(k)}" ${String(v??"")===String(k)?"selected":""}>${esc(l)}</option>`).join("")}</select>`; }
+  else if(fd.t==="area") inp=`<textarea id="${id}" data-k="${fd.k}">${esc(v||"")}</textarea>`;
+  else if(fd.t==="links") inp=`<textarea id="${id}" data-k="links" style="min-height:56px">${esc((v||[]).map(x=>x[0]+" | "+x[1]).join("\n"))}</textarea>`;
+  else if(fd.t==="flags"){ const f=o.f||[]; return `<div class="f"><span>${fd.l}</span><div class="chk">${[["u","нежил. (uninhabited)"],["ss","сельсовет"],["rs","райцентр"],["pgt","пгт"]].map(([k,l])=>`<label><input type="checkbox" data-flag="${k}" ${f.includes(k)?"checked":""}> ${l}</label>`).join("")}</div></div>`; }
+  else inp=`<input id="${id}" data-k="${fd.k}" ${fd.t==="num"?'inputmode="decimal"':""} value="${esc(v??"")}" ${fd.ro?"readonly":""}>`;
+  return `<label class="f" for="${id}"><span>${fd.l}${fd.req?" *":""}</span>${inp}${hint}</label>`;
+}
+function renderForm(){
+  const o=getItem(sel), kind=sel.kind, defs=kind==="site"?F_SITE:kind==="set"?F_SET:F_OV;
+  const title=kind==="site"?(o.en||o.id):kind==="set"?o.n:(o.en||o.ru||o.id);
+  pbody.innerHTML=`<div class="row" style="justify-content:space-between"><button class="btn" id="back">← List</button>
+    <span class="row">${kind!=="ov"?`<button class="btn" id="place">Place on map</button>`:`<button class="btn" id="more">Add points</button>`}<button class="btn" id="dup">Duplicate</button><button class="btn red" id="del">Delete</button></span></div>
+    <h2 style="margin-top:12px">${esc(title)}</h2>
+    <p class="small muted">${kind==="ov"?"Drag the white points on the map to reshape. Drag a dashed point to add one. Double-click or right-click a point to remove it.":"Drag the red-ringed marker on the map to move it, or use Place on map."}</p>
+    <form id="frm" autocomplete="off">${defs.map(d=>fieldHTML(d,o)).join("")}</form>
+    <h3>Фото · photos</h3><div id="phs"></div>
+    <label class="btn" style="display:inline-block">+ Add photos<input type="file" id="addph" accept="image/*" multiple hidden></label>
+    <p class="small muted" style="margin-top:8px">Photos are shrunk to 1100 px and saved as WebP when you click Save. Fill in the author and licence for anything that is not your own photo.</p>`;
+  const frm=pbody.querySelector("#frm");
+  frm.addEventListener("focusin",()=>{ frm._snap=JSON.stringify(D); });
+  frm.addEventListener("change",e=>{ const el=e.target; if(frm._snap){undo.push(frm._snap); frm._snap=JSON.stringify(D); $("#bUndo").disabled=false;}
+    if(el.dataset.flag){ const f=new Set(o.f||[]); el.checked?f.add(el.dataset.flag):f.delete(el.dataset.flag); f.size?o.f=[...f]:delete o.f; touch(); return; }
+    applyField(o,el.dataset.k,el.value,kind); });
+  frm.addEventListener("submit",e=>e.preventDefault());
+  if(kind==="set"){ const n=frm.querySelector('[data-k="n"]'), t=frm.querySelector('[data-k="t"]'); n.addEventListener("blur",()=>{ if(!t.value.trim()){t.value=translit(n.value.replace(/\s*\(.*?\)/,"")); applyField(o,"t",t.value,kind);} }); }
+  pbody.querySelector("#back").onclick=()=>{sel=null; drawAll(); render();};
+  pbody.querySelector("#del").onclick=()=>confirmBox(`Delete “${title}”? Its photos are removed from the map too. You can undo this until you close the editor.`,()=>{ snap(); delPhotos(photoKey(sel,o));
+    if(kind==="site") D.sites=D.sites.filter(x=>x!==o); else if(kind==="set") D.settlements.splice(sel.i,1); else D.overlays=D.overlays.filter(x=>x!==o);
+    sel=null; touch(); drawAll(); render(); });
+  pbody.querySelector("#dup").onclick=()=>{ snap(); const c=clone(o);
+    if(kind==="site"){c.id=uid(o.id); c.en=(o.en||"")+" (copy)"; c.lat=R5(o.lat+.002); D.sites.push(c); sel={kind,id:c.id};}
+    else if(kind==="set"){c.n=o.n+" (2)"; c.lat=R5(o.lat+.002); D.settlements.push(c); sel={kind,i:D.settlements.length-1};}
+    else {c.id=uid(o.id); c.en=(o.en||"")+" (copy)"; c.pts=c.pts.map(p=>[R5(p[0]+.002),p[1]]); D.overlays.push(c); sel={kind,id:c.id};}
+    touch(); drawAll(); render(); };
+  const pl=pbody.querySelector("#place"); if(pl) pl.onclick=()=>setMode({type:"place",obj:o,label:title});
+  const mo=pbody.querySelector("#more"); if(mo) mo.onclick=()=>{ snap(); const keep=o; D.overlays=D.overlays.filter(x=>x!==o); drawAll(); setMode({type:"draw",obj:keep,restore:true}); drawTemp(); };
+  pbody.querySelector("#addph").addEventListener("change",e=>addPhotos([...e.target.files],photoKey(sel,o)));
+  renderPhotos(photoKey(sel,o));
+}
+function applyField(o,k,val,kind){
+  val=String(val).trim();
+  if(k==="lat"||k==="lng"||k==="p"||k==="h"){ if(val===""){ if(k==="lat"||k==="lng"){flash("Latitude and longitude can't be empty.","err"); render(); return;} delete o[k]; }
+    else { const n=Number(val.replace(",",".")); if(!isFinite(n)){flash(`“${val}” is not a number.`,"err"); render(); return;} o[k]=k==="h"?Math.round(n):n; }
+    if((k==="lat"||k==="lng")&&o.sh!==undefined) o.sh=nomen(o.lat,o.lng); }
+  else if(k==="z") o.z=Number(val);
+  else if(k==="links"){ const L2=val.split("\n").map(l=>l.split("|").map(x=>x.trim())).filter(x=>x[0]&&x[1]); L2.length?o.links=L2:delete o.links; }
+  else if(k==="id"){ const nid=val.toLowerCase().replace(/[^a-z0-9-]+/g,"-").replace(/^-|-$/g,""); if(!nid){flash("ID can't be empty.","err"); render(); return;}
+    if(nid!==o.id&&[...D.sites,...D.overlays].some(x=>x.id===nid)){flash(`ID “${nid}” is already used.`,"err"); render(); return;}
+    const oldK=photoKey(sel,o); o.id=nid; sel.id=nid; const newK=photoKey(sel,o); movePhotos(oldK,newK); }
+  else if(k==="n"&&kind==="set"){ const oldK="set:"+o.n; o.n=val; movePhotos(oldK,"set:"+val); }
+  else if(k==="sym"||k==="lc"||k==="wiki"||k==="acc"||k==="src"||k==="d"||k==="ru"){ val?o[k]=val:delete o[k]; }
+  else o[k]=val;
+  touch(); drawAll();
+  if(k==="style"||k==="id"||k==="en"||k==="n") render();
+}
+
+/* ---------------- photos ---------------- */
+function movePhotos(a,b){ if(a===b||!D.photos[a]) return; D.photos[b]=(D.photos[b]||[]).concat(D.photos[a]); delete D.photos[a]; }
+function delPhotos(k){ (D.photos[k]||[]).forEach(p=>markDel(p.f)); delete D.photos[k]; }
+function markDel(f){ if(newFiles.has(f)){newFiles.delete(f); return;} delFiles.add(f); }
+function renderPhotos(k){
+  const box=pbody.querySelector("#phs"), ps=D.photos[k]||[];
+  box.innerHTML=ps.length?ps.map((p,i)=>`<div class="ph"><img src="${esc(imgSrc(p.f))}" alt="">
+    <div class="pf">${newFiles.has(p.f)?'<span class="new">new · saved on Save</span>':""}
+      <input data-i="${i}" data-pk="cap" placeholder="Caption" value="${esc(p.cap||"")}" aria-label="Caption">
+      <input data-i="${i}" data-pk="by" placeholder="Author" value="${esc(p.by||"")}" aria-label="Author">
+      <input data-i="${i}" data-pk="lic" placeholder="Licence, e.g. CC BY-SA 4.0" value="${esc(p.lic||"")}" aria-label="Licence">
+      <input data-i="${i}" data-pk="lu" placeholder="Licence link (optional)" value="${esc(p.lu||"")}" aria-label="Licence link">
+      <input data-i="${i}" data-pk="src" placeholder="Source page link (optional)" value="${esc(p.src||"")}" aria-label="Source link">
+      <div class="pb"><button data-mv="${i}" data-d="-1" title="Move up" ${i?"":"disabled"}>↑</button><button data-mv="${i}" data-d="1" title="Move down" ${i<ps.length-1?"":"disabled"}>↓</button><button data-rm="${i}" title="Remove photo">✕</button>${i===0?'<span class="small muted" style="margin-left:4px">lead photo</span>':""}</div>
+    </div></div>`).join(""):`<p class="small muted">No photos yet.</p>`;
+  box.querySelectorAll("input[data-pk]").forEach(inp=>inp.addEventListener("change",()=>{snap(); const p=ps[+inp.dataset.i]; const v=inp.value.trim(); v?p[inp.dataset.pk]=v:delete p[inp.dataset.pk]; touch();}));
+  box.querySelectorAll("[data-mv]").forEach(b=>b.addEventListener("click",()=>{snap(); const i=+b.dataset.mv,j=i+ +b.dataset.d; [ps[i],ps[j]]=[ps[j],ps[i]]; touch(); renderPhotos(k);}));
+  box.querySelectorAll("[data-rm]").forEach(b=>b.addEventListener("click",()=>{snap(); const [p]=ps.splice(+b.dataset.rm,1); markDel(p.f); if(!ps.length) delete D.photos[k]; touch(); renderPhotos(k);}));
+}
+async function addPhotos(files,k){
+  if(!files.length) return; snap();
+  for(const file of files){
+    try{
+      const bmp=await createImageBitmap(file); const sc=Math.min(1,1100/bmp.width,900/bmp.height);
+      const w=Math.round(bmp.width*sc), h=Math.round(bmp.height*sc), cv=document.createElement("canvas"); cv.width=w; cv.height=h;
+      cv.getContext("2d").drawImage(bmp,0,0,w,h);
+      let blob=await new Promise(r=>cv.toBlob(r,"image/webp",.8)); let ext="webp";
+      if(!blob||blob.type!=="image/webp"){ blob=await new Promise(r=>cv.toBlob(r,"image/jpeg",.85)); ext="jpg"; }
+      const name=`photos/${k.replace(/[^a-z0-9-]+/gi,"_")}-${Date.now().toString(36)}${Math.random().toString(36).slice(2,5)}.${ext}`;
+      newFiles.set(name,blob); blobURL.set(name,URL.createObjectURL(blob));
+      (D.photos[k]=D.photos[k]||[]).push({f:name,w,h,cap:file.name.replace(/\.[^.]+$/,"").replace(/[_-]+/g," "),by:"",lic:""});
+    }catch(err){ flash(`Couldn't read ${file.name}: ${err.message||err}`,"err"); }
+  }
+  touch(); renderPhotos(k);
+}
+
+/* ---------------- folder: open, load, save ---------------- */
+function parseData(txt){ const a=txt.indexOf("{"), b=txt.lastIndexOf("}"); const d=JSON.parse(txt.slice(a,b+1));
+  d.overlays=d.overlays||[]; d.photos=d.photos||{}; d.sheets=d.sheets||[]; if(!Array.isArray(d.sites)||!Array.isArray(d.settlements)) throw new Error("sites or settlements missing"); return d; }
+async function pickFolder(){
+  if(!window.showDirectoryPicker){ msgBox(`This browser can't save into folders. Open the editor in <b>Google Chrome</b> or <b>Microsoft Edge</b> on a computer.`); return null; }
+  try{ const h=await window.showDirectoryPicker({id:"atlas",mode:"readwrite"});
+    const dd=await h.getDirectoryHandle("data").catch(()=>null); const fh=dd&&await dd.getFileHandle("atlas-data.js").catch(()=>null);
+    if(!fh){ msgBox(`That folder isn't the atlas. Choose the folder that contains <b>index.html</b>, <b>editor.html</b> and the <b>data</b> folder.`); return null; }
+    return {h,dd,fh};
+  }catch(e){ if(e.name!=="AbortError") msgBox("Couldn't open the folder: "+esc(e.message)); return null; }
+}
+async function openFolder(){
+  if(dirty&&!(await ask("You have unsaved changes. Opening the folder reloads the data from disk and discards them. Continue?"))) return;
+  const r=await pickFolder(); if(!r) return; dir=r.h;
+  try{ D=parseData(await (await r.fh.getFile()).text()); }catch(e){ msgBox("data/atlas-data.js couldn't be read: "+esc(e.message)+". If you edited it by hand, check for a missing comma or quote, or restore a copy from data/backups."); return; }
+  undo=[]; $("#bUndo").disabled=true; dirty=false; $("#bSave").disabled=true; newFiles.clear(); delFiles.clear(); sel=null; stateLine(); drawAll(); render();
+}
+function validate(){
+  const errs=[], ids=new Set();
+  D.sites.forEach(s=>{ if(!s.id) errs.push("A site has no ID."); else if(ids.has(s.id)) errs.push(`Two items share the ID “${s.id}”.`); ids.add(s.id);
+    if(!isFinite(s.lat)||!isFinite(s.lng)) errs.push(`“${s.en||s.id}” has no valid position.`); if(!CATS[s.cat]) errs.push(`“${s.en||s.id}” has no category.`); });
+  D.overlays.forEach(o=>{ if(ids.has(o.id)) errs.push(`Two items share the ID “${o.id}”.`); ids.add(o.id); if(!o.pts||o.pts.length<(o.type==="area"?3:2)) errs.push(`“${o.en||o.id}” needs more points.`); });
+  D.settlements.forEach(v=>{ if(!v.n) errs.push("A settlement has no name."); if(!isFinite(v.lat)||!isFinite(v.lng)) errs.push(`“${v.n}” has no valid position.`); });
+  return errs;
+}
+function serialize(){
+  const arr=a=>"[\n"+a.map(o=>"  "+JSON.stringify(o)).join(",\n")+"\n ]";
+  return "/* Chernobyl Zone Atlas data. Edit with editor.html, or carefully by hand (this is JSON after the = sign). */\nwindow.ATLAS_DATA={\n"
+   +` "version":1,\n "saved":${JSON.stringify(D.saved)},\n "sites":${arr(D.sites)},\n "settlements":${arr(D.settlements)},\n "sheets":${arr(D.sheets)},\n "overlays":${arr(D.overlays)},\n "photos":{\n`
+   +Object.entries(D.photos).map(([k,v])=>"  "+JSON.stringify(k)+":"+JSON.stringify(v)).join(",\n")+"\n }\n};\n";
+}
+async function writeFile(dh,name,data){ const fh=await dh.getFileHandle(name,{create:true}); const w=await fh.createWritable(); await w.write(data); await w.close(); }
+async function save(){
+  if(!D||!dirty) return;
+  const errs=validate(); if(errs.length){ msgBox("Fix these before saving:<ul>"+errs.slice(0,12).map(e=>`<li>${esc(e)}</li>`).join("")+"</ul>"); return; }
+  if(!dir){ const r=await pickFolder(); if(!r) return; dir=r.h; }
+  try{ if((await dir.queryPermission({mode:"readwrite"}))!=="granted" && (await dir.requestPermission({mode:"readwrite"}))!=="granted"){ msgBox("Permission to write to the folder was refused."); return; } }catch(e){}
+  setState("Saving…");
+  try{
+    const dd=await dir.getDirectoryHandle("data");
+    const old=await (await (await dd.getFileHandle("atlas-data.js")).getFile()).text();
+    const bk=await dd.getDirectoryHandle("backups",{create:true}); const ts=new Date().toISOString().replace(/[:T]/g,"-").slice(0,19);
+    await writeFile(bk,`atlas-data-${ts}.js`,old);
+    if(newFiles.size){ const ph=await dir.getDirectoryHandle("photos",{create:true});
+      for(const [path,blob] of newFiles){ await writeFile(ph,path.split("/").pop(),blob); } }
+    const used=new Set(Object.values(D.photos).flat().map(p=>p.f));
+    for(const f of delFiles){ if(used.has(f)||!f.startsWith("photos/")) continue; try{ const ph=await dir.getDirectoryHandle("photos"); await ph.removeEntry(f.split("/").pop()); }catch(e){} }
+    D.saved=new Date().toISOString(); await writeFile(dd,"atlas-data.js",serialize());
+    newFiles.clear(); delFiles.clear(); dirty=false; $("#bSave").disabled=true; stateLine(); flash(`Saved. A backup of the previous version is in data/backups (${ts}).`,"ok");
+  }catch(e){ stateLine(); msgBox("Saving failed: "+esc(e.message||e)+"<br>Nothing was lost: your edits are still here. Try again, or check the folder isn't read-only."); }
+}
+$("#bOpen").onclick=openFolder; $("#bSave").onclick=save; $("#bUndo").onclick=doUndo;
+
+/* ---------------- small dialogs (no browser alert/confirm) ---------------- */
+function msgBox(html){ const d=document.createElement("div"); d.className="dlg"; d.innerHTML=`<div role="dialog" aria-modal="true"><p>${html}</p><div class="row" style="justify-content:flex-end"><button class="btn go">OK</button></div></div>`; document.body.appendChild(d); const b=d.querySelector("button"); b.focus(); b.onclick=()=>d.remove(); }
+function ask(text){ return new Promise(res=>{ const d=document.createElement("div"); d.className="dlg"; d.innerHTML=`<div role="dialog" aria-modal="true"><p>${esc(text)}</p><div class="row" style="justify-content:flex-end"><button class="btn" data-a="0">Cancel</button><button class="btn red" data-a="1">Continue</button></div></div>`; document.body.appendChild(d); d.querySelectorAll("button").forEach(b=>b.onclick=()=>{d.remove(); res(b.dataset.a==="1");}); d.querySelector('[data-a="0"]').focus(); }); }
+function confirmBox(text,fn){ ask(text).then(ok=>{ if(ok) fn(); }); }
+
+/* ---------------- help ---------------- */
+function renderHelp(){ pbody.innerHTML=`<h2>Справка · how to use</h2>
+  <h3>Before you start</h3>
+  <ul class="help"><li>Use <b>Chrome</b> or <b>Edge</b> on a computer. Other browsers can show the editor but can't save.</li>
+  <li>Work on the copy of the atlas folder on your computer, not on the website.</li>
+  <li>Click <b>Open folder</b> and choose the atlas folder (the one with index.html in it). Allow editing when the browser asks.</li></ul>
+  <h3>Editing</h3>
+  <ul class="help"><li><b>Объекты</b>: the sites with full entries (plant, Pripyat landmarks, Duga…). <b>Сёла</b>: settlements and notes read from the sheets. <b>Линии</b>: lines and areas you draw yourself.</li>
+  <li>Click an item on the map or in the list to edit it. Drag its marker to move it.</li>
+  <li><b>+ Draw line / + Draw area</b>: click point by point on the map, then press <kbd>Enter</kbd> or Finish. Pick a style (road, fence, forest, radiation band…) in the form.</li>
+  <li>To reshape a line or area, drag its white points. Drag a dashed midpoint to add a point. Double-click or right-click a point to delete it.</li>
+  <li><b>Photos</b>: add pictures from your computer inside any item. They are shrunk automatically. Always fill in author and licence for other people's photos.</li>
+  <li><kbd>Ctrl</kbd>+<kbd>Z</kbd> undoes, <kbd>Ctrl</kbd>+<kbd>S</kbd> saves.</li></ul>
+  <h3>Saving and publishing</h3>
+  <ul class="help"><li><b>Save</b> writes <code>data/atlas-data.js</code> and any new photos into the folder, and first keeps a backup in <code>data/backups</code>.</li>
+  <li>Check the result by double-clicking <b>index.html</b> in the folder.</li>
+  <li>To publish, upload the changed files to your website: always <code>data/atlas-data.js</code>, plus any new files in <code>photos</code>.</li>
+  <li>To roll back, copy a file from <code>data/backups</code> over <code>data/atlas-data.js</code> (rename it to atlas-data.js).</li></ul>
+  <h3>What the editor doesn't change</h3>
+  <p class="small">The base map scans, the traced water, the schematic radiation traces, the 10/30 km circles, the legend wording and the page texts. Those live in <code>index.html</code> and the <code>tiles</code> folder.</p>`; }
+
+/* ---------------- start ---------------- */
+try{ if(window.ATLAS_DATA){ D=clone(window.ATLAS_DATA); D.overlays=D.overlays||[]; D.photos=D.photos||{}; stateLine(); setState($("#state").innerHTML+" · you'll choose the folder when you save"); } else setState("Click Open folder and choose the atlas folder."); }
+catch(e){ setState("Couldn't read the data file."); }
+drawAll(); render();
+})();
+</script>
+</body>
+</html>

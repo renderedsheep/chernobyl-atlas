@@ -1,0 +1,50 @@
+name: "Add a site · Добавить объект"
+description: Suggest a place that is missing from the map.
+title: "[New site] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. Fill in what you can and press **Submit new issue**. Every suggestion is checked before the map changes.
+  - type: input
+    id: name
+    attributes:
+      label: Name
+      description: In English, Russian or Ukrainian, whichever you know.
+    validations:
+      required: true
+  - type: input
+    id: location
+    attributes:
+      label: Location
+      description: Coordinates (latitude, longitude). Filled in for you if you clicked "suggest a site here" on the map.
+    validations:
+      required: true
+  - type: dropdown
+    id: category
+    attributes:
+      label: What kind of place is it?
+      options:
+        - Power plant building or facility
+        - Radioactive waste site
+        - Pripyat landmark
+        - Town or village
+        - Liquidation site (vehicle graveyard, burial, buried village)
+        - Military site or relic
+        - Memorial or church
+        - Checkpoint
+        - Radiation hotspot
+        - Nature
+        - Other
+  - type: textarea
+    id: description
+    attributes:
+      label: Short description
+      description: What it is and why it matters. Two or three sentences is plenty.
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Sources
+      description: Links, books, maps or your own visit.
