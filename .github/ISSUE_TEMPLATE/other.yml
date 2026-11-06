@@ -1,0 +1,29 @@
+name: "Other correction or idea · Другое"
+description: Wrong facts, a broken link, a missing detail, or an idea.
+title: "[Correction] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. Fill in what you can and press **Submit new issue**.
+  - type: input
+    id: object
+    attributes:
+      label: Which object or part of the map?
+      description: Filled in for you when you came from the map. Leave empty for general ideas.
+  - type: input
+    id: location
+    attributes:
+      label: Location (optional)
+      description: Coordinates, if it's about a particular spot.
+  - type: textarea
+    id: details
+    attributes:
+      label: What should change?
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: Sources
+      description: Links, books, maps or your own visit.

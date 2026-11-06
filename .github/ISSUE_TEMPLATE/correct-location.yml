@@ -1,0 +1,32 @@
+name: "Correct a location · Исправить положение"
+description: Something on the map is in the wrong place.
+title: "[Location] "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for helping. You don't need to know Git: fill in what you can and press **Submit new issue**. Every suggestion is checked before the map changes.
+  - type: input
+    id: object
+    attributes:
+      label: Which object?
+      description: Name of the site, village, line or area. Filled in for you when you came from the map.
+    validations:
+      required: true
+  - type: input
+    id: current
+    attributes:
+      label: Where the map shows it now
+      description: Coordinates (latitude, longitude). Filled in for you when you came from the map.
+  - type: textarea
+    id: correct
+    attributes:
+      label: Where it should be
+      description: "Coordinates, e.g. 51.38940, 30.09900 (click the map to get them), or a description such as \"about 300 m north of the station, on the west side of the road\"."
+    validations:
+      required: true
+  - type: textarea
+    id: source
+    attributes:
+      label: How do you know?
+      description: A link, a map, a photo, or your own visit. Sources help us check quickly.

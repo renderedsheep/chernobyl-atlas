@@ -1,0 +1,30 @@
+Chernobyl Zone Atlas (Схема Зоны Отчуждения)
+Copyright 2026 Fernand G.
+
+This project is under two licences, plus third-party material that keeps
+its own terms.
+
+1. CODE: Apache License, Version 2.0 (see LICENSE)
+   index.html, editor.html and the scripts in tools/*.py.
+
+2. TEXT AND DATA: Creative Commons Attribution-ShareAlike 4.0
+   International, CC BY-SA 4.0 (see LICENSE-CONTENT)
+   - data/atlas-data.js: site descriptions, settlement readings, sheet
+     notes, lines and areas
+   - data/water.js: water outlines traced from the map sheets
+   - tools/readings/
+   - written text in the pages (the Справка/about page, legend notes)
+     and the project documents (README, CHANGELOG)
+   Credit as: "Chernobyl Zone Atlas by Fernand G., CC BY-SA 4.0".
+
+3. NOT COVERED BY EITHER LICENCE
+   - photos/: photographs from Wikimedia Commons, each under its own
+     licence (CC BY, CC BY-SA, CC0, public domain ...). Author, licence
+     and source are listed in CREDITS.md and shown under each photo.
+   - tiles/ and tools/src/: scans of Soviet General Staff (1981-1986) and
+     Ukrainian Main Staff (1993) 1:100 000 topographic maps, and tiles
+     made from them. Their copyright status is uncertain; they are
+     included for reference and are not licensed by the author.
+   - Leaflet (BSD 2-Clause) and the web fonts Oswald, Jura,
+     PT Sans Narrow and PT Mono (SIL Open Font License), loaded from
+     cdnjs and Google Fonts.
