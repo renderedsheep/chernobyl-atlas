@@ -202,6 +202,14 @@ button{font-family:inherit;color:inherit}
 .facts dd{margin:0}
 .prec{display:inline-block;padding:0 5px;border:1px solid currentColor;font:600 11px var(--f-tech)}
 .prec.pub{color:#2e5f2a}.prec.map{color:var(--blue)}.prec.est{color:var(--red)}
+.prec.uo{color:var(--ink-2);border-style:dashed}
+.uo{margin:12px 0;padding:8px 10px 4px;border:1.5px dashed var(--ink-2);background:rgba(255,255,255,.35)}
+.uo h4{margin:0 0 3px;font:700 11.5px var(--f-tech);letter-spacing:.06em;text-transform:uppercase;color:var(--ink)}
+.uo-note{margin:0 0 7px;font-size:12.5px;line-height:1.3;color:var(--ink-2)}
+.uo ul{margin:0;padding:0;list-style:none}
+.uo li{margin:0 0 7px;font-size:14px;line-height:1.38}
+.uo-d{display:inline-block;margin-right:6px;padding:0 4px;border:1px solid var(--ink-2);font:700 11px/1.45 var(--f-tech);font-variant-numeric:tabular-nums}
+.uo a{color:var(--blue);text-decoration:none;border-bottom:1px solid rgba(57,87,130,.35);white-space:nowrap}
 .card a{color:var(--blue)}
 .btnrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
 .suggest{margin-top:12px;padding-top:8px;border-top:1px dashed var(--rule);font:13px/1.4 var(--f-body);color:var(--ink-2)}
@@ -436,6 +444,7 @@ const SYM = {
   hot:`<svg class="sym" width="20" height="20" viewBox="0 0 20 20"><path d="M10 1.5 L19 18 H1Z" fill="${C.violet}" stroke="${C.paper}" stroke-width="1"/><text x="10" y="15.5" text-anchor="middle" font-family="PT Mono,monospace" font-size="9" font-weight="700" fill="${C.paper}">☢</text></svg>`,
   war:`<svg class="sym" width="16" height="16" viewBox="0 0 16 16"><path d="M8 1 L15 8 L8 15 L1 8Z" fill="${C.paper}" stroke="${C.red}" stroke-width="2"/><path d="M8 4.5 V9.5 M8 11 V12" stroke="${C.red}" stroke-width="2"/></svg>`,
   nature:`<svg class="sym" width="16" height="18" viewBox="0 0 16 18"><path d="M8 1 L14 11 H2Z" fill="${C.olive}"/><rect x="7" y="11" width="2" height="6" fill="${C.olive}"/></svg>`,
+  uo:`<svg class="sym" width="18" height="18" viewBox="0 0 18 18"><circle cx="9" cy="9" r="7.3" fill="${C.paper}" fill-opacity=".9" stroke="${C.ink}" stroke-width="1.6" stroke-dasharray="2.6 1.9"/><text x="9" y="12.9" text-anchor="middle" font-family="PT Mono,monospace" font-size="10.5" font-weight="700" fill="${C.ink}">?</text></svg>`,
   station:`<svg class="sym" width="18" height="12" viewBox="0 0 18 12"><rect x="1" y="1" width="16" height="10" fill="${C.ink}"/><rect x="4" y="4" width="10" height="4" fill="${C.paper}"/></svg>`
 };
 const symOf = s => SYM[s.sym || CATS[s.cat].sym];
@@ -452,7 +461,8 @@ const CATS = {
   check:{ru:"КПП",en:"Checkpoints",sym:"check",layer:"check"},
   hot:{ru:"Радиационные «пятна»",en:"Radiation hotspots",sym:"hot",layer:"rad"},
   war:{ru:"События",en:"News and noteworthy",sym:"war",layer:"war"},
-  nature:{ru:"Природа",en:"Nature",sym:"nature",layer:"nature"}
+  nature:{ru:"Природа",en:"Nature",sym:"nature",layer:"nature"},
+  uo:{ru:"Неофициальные сведения",en:"Unofficial reports only",sym:"uo",layer:"uo"}
 };
 
 /* ===================== linework (schematic) ===================== */
@@ -564,6 +574,7 @@ const LAYERS = [
   {id:"notes",ru:"Отметки на листах",en:"Camps, vehicle washes, stations printed on the sheets",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><rect x="7" y="3" width="12" height="12" fill="${C.paper}" stroke="${C.blue}" stroke-width="1.8" transform="rotate(45 13 9)"/></svg>`},
   {id:"mem",ru:"Памятники",en:"Memorials and churches",on:true,sw:SYM.memorial},
   {id:"check",ru:"КПП",en:"Checkpoints",on:true,sw:SYM.check},
+  {id:"uo",ru:"Неофициальные сведения",en:"Places known only from visitors' unofficial reports (unverified)",on:false,sw:SYM.uo},
   {id:"rad",ru:"Радиация",en:"Cs-137 fallout traces 1986 (schematic), hotspots",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><defs><pattern id="sw-r" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#b3261e" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="5" stroke="#b3261e" stroke-width="1.8"/></pattern></defs><rect x="1" y="1" width="24" height="16" fill="url(#sw-r)" stroke="${C.violet}"/></svg>`},
   {id:"war",ru:"События",en:"News and noteworthy",on:false,sw:SYM.war},
   {id:"nature",ru:"Природа",en:"Reserves and wildlife",on:false,sw:SYM.nature}
@@ -867,7 +878,7 @@ function renderKey(){
     +row(SYM.waste,"Пункт захоронения РАО","Radioactive waste disposal or storage")+row(SYM.city,"Город","Town")+row(SYM.vill,"Населённый пункт нежилой","Evacuated village")
     +row(SYM.live,"Населённый пункт жилой","Inhabited village")+row(SYM.poi,"Объект в Припяти","Pripyat landmark")+row(SYM.graveyard,"Объект ликвидации","Vehicle graveyard, buried village or forest")
     +row(SYM.mil,"Военный объект","Military site or relic")+row(SYM.memorial,"Памятник, церковь","Memorial or church")+row(SYM.check,"КПП","Checkpoint")
-    +row(SYM.hot,"Радиационное пятно","Radiation hotspot")+row(SYM.war,"События","News and noteworthy")+row(SYM.nature,"Заповедник, животный мир","Nature reserve, wildlife"));
+    +row(SYM.hot,"Радиационное пятно","Radiation hotspot")+row(SYM.war,"События","News and noteworthy")+row(SYM.nature,"Заповедник, животный мир","Nature reserve, wildlife")+row(SYM.uo,"Неофициальные сведения","Known only from unofficial reports; unverified"));
   h+=sec("Населённые пункты по листам","settlements from the sheets",
      row(ln(`<circle cx="20" cy="12" r="5.6" fill="${C.brown}" stroke="${C.ink}" stroke-width=".8"/><circle cx="20" cy="12" r="4.6" fill="${C.brown}" stroke="#fffaf0" stroke-width="1.4"/>`),"Населённый пункт","Settlement read from the sheet; click for population")
     +row(ln(`<circle cx="20" cy="12" r="5.2" fill="${C.brown}" fill-opacity=".45" stroke="${C.red}" stroke-width="2" stroke-dasharray="2.2 1.6"/>`),"Нежилой (лист 1993 г.)","Marked «нежил.» (uninhabited) on the 1993 sheets")
@@ -935,6 +946,11 @@ function openLB(ps,i){
   box.addEventListener("click",e=>{if(e.target===box) close();}); document.addEventListener("keydown",key);
   document.body.appendChild(box); draw();}
 const WP="https://en.wikipedia.org/wiki/";
+/* visitors' own accounts: dated, linked, paraphrased, kept apart from the checked text */
+function uoHTML(s){ if(!s.uo||!s.uo.length) return "";
+  return `<section class="uo" aria-label="Unofficial reports"><h4>Из неофициальных отчётов · from unofficial reports</h4>
+  <p class="uo-note">Visitors' own accounts: explorers, trip reports, tour sites. Not checked by the atlas; places change and readings vary.</p><ul>`
+  + s.uo.map(r=>`<li><span class="uo-d">${esc(r.d)}</span>${esc(r.t)} <a href="${esc(r.u)}" target="_blank" rel="noopener nofollow">${esc(r.by)} ↗</a></li>`).join("") + `</ul></section>`; }
 function srcHtml(s){let h=esc(s.src||"");
   if(s.wiki){const t=decodeURIComponent(s.wiki.split("/wiki/")[1]||"article").replace(/_/g," ");
     const a=`<a href="${esc(s.wiki)}" target="_blank" rel="noopener">Wikipedia: ${esc(t)} ↗</a>`;
@@ -976,9 +992,9 @@ function renderInfo(){
   if(!s){pbody.innerHTML=`<h2>Объект не выбран</h2><p>Click any symbol on the map, a building on the plant schematic, or an entry in the index to read about it here.</p>`;return;}
   const [d,az]=distBear(U4,[s.lat,s.lng]);
   const evac = (s.cat==="settle"&&!/chern|prip|poliske|dyt/.test(s.id)) ? `<p class="small muted">${d<=10?"Inside the 10-km zone, evacuated in early May 1986.":d<=30?"Inside the 30-km zone, evacuated by early May 1986.":"Outside the 30-km circle; resettled later as contamination maps came in."}</p>`:"";
-  const prec = s.p==="pub"?`<span class="prec pub">published</span>`:s.p==="map"?`<span class="prec map">read from sheet ${esc(s.acc||"")}</span>`:`<span class="prec est">estimated ${esc(s.acc||"")}</span>`;
+  const prec = s.p==="uo"?`<span class="prec uo">from unofficial reports ${esc(s.acc||"")}</span>`:s.p==="pub"?`<span class="prec pub">published</span>`:s.p==="map"?`<span class="prec map">read from sheet ${esc(s.acc||"")}</span>`:`<span class="prec est">estimated ${esc(s.acc||"")}</span>`;
   pbody.innerHTML=`<div class="card"><span class="cat">${CATS[s.cat].ru}</span><h2>${esc(s.en)}</h2><div class="ru">${esc(s.ru)}</div>
-  ${galleryHTML(s.id)}<p>${esc(s.d)}</p>${evac}
+  ${galleryHTML(s.id)}<p>${esc(s.d)}</p>${evac}${uoHTML(s)}
   <dl class="facts"><dt>Coordinates</dt><dd>${dm(s.lat,"N","S")} ${dm(s.lng,"E","W")}<br>${s.lat.toFixed(4)}, ${s.lng.toFixed(4)}</dd><dt>Grid</dt><dd>${gkTxt(s.lat,s.lng)}</dd>
   <dt>Position</dt><dd>${prec}</dd><dt>From unit 4</dt><dd>${d<0.05?"—":d.toFixed(1)+" км, az "+az.toFixed(0).padStart(3,"0")+"°"} · ${zoneOf(d)}</dd><dt>Source</dt><dd>${srcHtml(s)}</dd></dl>
   ${(s.links||[]).map(l=>`<p class="small"><a href="${l[1]}" target="_blank" rel="noopener">${esc(l[0])} ↗</a></p>`).join("")}
@@ -993,8 +1009,11 @@ function renderAbout(){
   <h3>Base map</h3>
   <p>Eight General Staff sheets at 1:100 000 (M-35-23, -24, -35, -36 and M-36-13, -14, -25, -26), editions 1981, 1986 and 1993. Each sheet's frame corners were detected, shifted from the Soviet datum СК-42 to WGS 84 (about 120 m west and 18 m south here), reprojected and joined. Checked against published coordinates for Pripyat, Poliske, Dytiatky, Kopachi and the Duga array, the fit is within about 100 m. A kilometre grid computed independently from the coordinates lands on the grid printed on the sheets, which confirms the alignment. The scans are about 16 m per pixel, so the base is sharp to zoom 13; past that, water outlines, labels and symbols are redrawn as vectors and the scan fades back.</p>
   <h3>How accurate is it</h3>
-  <p>Each entry says where its position came from: <span class="prec pub">published</span> coordinates, <span class="prec map">read from sheet</span> (±150–200 m), or <span class="prec est">estimated</span> from descriptions. ${SITES.filter(s=>s.p==="pub").length} sites use published coordinates, ${SITES.filter(s=>s.p==="map").length} were placed from the sheets and ${SITES.filter(s=>s.p==="est").length} are still estimates. The ${VILL.filter(v=>v.k==="set").length} settlements were read by hand from the sheets with their printed population. Reading the sheets moved Rassokha about 12 km and Vilcha about 10 km from where the first version had them, and showed that Wikipedia's coordinates for Novoshepelychi fall on Chystohalivka.</p>
+  <p>Each entry says where its position came from: <span class="prec pub">published</span> coordinates, <span class="prec map">read from sheet</span> (±150–200 m), or <span class="prec est">estimated</span> from descriptions, or <span class="prec uo">from unofficial reports</span>. ${SITES.filter(s=>s.p==="pub").length} sites use published coordinates, ${SITES.filter(s=>s.p==="map").length} were placed from the sheets and ${SITES.filter(s=>s.p==="est").length} are still estimates. The ${VILL.filter(v=>v.k==="set").length} settlements were read by hand from the sheets with their printed population. Reading the sheets moved Rassokha about 12 km and Vilcha about 10 km from where the first version had them, and showed that Wikipedia's coordinates for Novoshepelychi fall on Chystohalivka.</p>
   <p>The radiation layer is still a schematic of the three 1986 fallout traces, not survey data. The zone outline is approximate.</p>
+  <h3>Неофициальные сведения · unofficial reports</h3>
+  <p>Some cards carry a dashed box of observations from visitors' own accounts: independent explorers (the people often called «stalkers»), trip reports and tour sites. Each is dated and linked to its author, paraphrased rather than copied, and not checked by the atlas. Places that appear only in such accounts have a dashed <b>?</b> symbol and their own layer, off by default.</p>
+  <p>The atlas does not record ways into the zone without a permit, ways past checkpoints or guards, or anything about military or security positions since February 2022. Photographs from these sources are not reproduced.</p>
   <h3>Помочь атласу · Help improve the atlas</h3>
   <p>Spotted something in the wrong place, know a site that's missing, or have a photo? Send a suggestion. Each one opens a short form on GitHub (a free account is needed) and is reviewed before anything changes on the map. Suggestions are public.</p>
   <div class="helpgrid">

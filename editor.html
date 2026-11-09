@@ -163,9 +163,9 @@ kbd{font:12px var(--f-mono);border:1px solid var(--ink-2);padding:0 4px;backgrou
 "use strict";
 /* ---------------- reference tables (keep in sync with index.html) ---------------- */
 const CATS={plant:"ЧАЭС — промплощадка · Power plant site",waste:"Обращение с РАО · Radioactive waste",pripyat:"Припять · Pripyat landmarks",settle:"Населённые пункты · Settlements (with entries)",
-  liq:"Ликвидация 1986 · Liquidation",mil:"Военные объекты · Military site or relic",mem:"Памятники · Memorials",check:"КПП · Checkpoints",hot:"Радиационные пятна · Hotspots",war:"События · News and noteworthy",nature:"Природа · Nature"};
-const CATCOL={plant:"#b3261e",waste:"#e0b400",pripyat:"#d9483b",settle:"#231f1b",liq:"#5b544b",mil:"#c8102e",mem:"#231f1b",check:"#7a6a50",hot:"#6b3d8f",war:"#b3261e",nature:"#5f7a24"};
-const SYMS={"":"(category default)",reactor:"Reactor square",plantobj:"Plant building",station:"Railway station",waste:"Radiation trefoil",city:"Town square",vill:"Village ring (evacuated)",live:"Village dot (inhabited)",poi:"Red dot",mil:"Red star",graveyard:"Liquidation box",memorial:"Monument",check:"Checkpoint bar",hot:"Hotspot triangle",war:"Diamond (news)",nature:"Tree"};
+  liq:"Ликвидация 1986 · Liquidation",mil:"Военные объекты · Military site or relic",mem:"Памятники · Memorials",check:"КПП · Checkpoints",hot:"Радиационные пятна · Hotspots",war:"События · News and noteworthy",nature:"Природа · Nature",uo:"Неофициальные сведения · Unofficial reports only"};
+const CATCOL={plant:"#b3261e",waste:"#e0b400",pripyat:"#d9483b",settle:"#231f1b",liq:"#5b544b",mil:"#c8102e",mem:"#231f1b",check:"#7a6a50",hot:"#6b3d8f",war:"#b3261e",nature:"#5f7a24",uo:"#5b544b"};
+const SYMS={"":"(category default)",reactor:"Reactor square",plantobj:"Plant building",station:"Railway station",waste:"Radiation trefoil",city:"Town square",vill:"Village ring (evacuated)",live:"Village dot (inhabited)",poi:"Red dot",mil:"Red star",graveyard:"Liquidation box",memorial:"Monument",check:"Checkpoint bar",hot:"Hotspot triangle",war:"Diamond (news)",nature:"Tree",uo:"Dashed ring with ? (unofficial)"};
 const STYLES={road:"Road",track:"Dirt track",rail:"Railway",boundary:"Boundary (dash-dot)",fence:"Fence (short dashes)",red:"Red line",pipe:"Pipeline / power line",
   area:"Area, red outline",built:"Built-up area",forest:"Forest",water:"Water",rad1:"Radiation > 1480 kBq/m²",rad2:"Radiation 555–1480 kBq/m²",rad3:"Radiation 185–555 kBq/m²"};
 const LINESTYLES=["road","track","rail","boundary","fence","red","pipe"];
@@ -319,7 +319,7 @@ const F_SITE=[
   {k:"sym",l:"Symbol",t:"sel",o:SYMS},
   {k:"d",l:"Description",t:"area"},
   {g:[{k:"lat",l:"Latitude",t:"num"},{k:"lng",l:"Longitude",t:"num"}]},
-  {g:[{k:"p",l:"Position source",t:"sel",o:{pub:"Published coordinates",map:"Read from map sheet",est:"Estimated"}},{k:"acc",l:"Accuracy note",h:"e.g. ±150 m"}]},
+  {g:[{k:"p",l:"Position source",t:"sel",o:{pub:"Published coordinates",map:"Read from map sheet",est:"Estimated",uo:"From unofficial reports"}},{k:"acc",l:"Accuracy note",h:"e.g. ±150 m"}]},
   {g:[{k:"z",l:"Label from zoom",t:"sel",o:Object.fromEntries([8,9,10,11,12,13,14,15,16].map(n=>[n,String(n)]))},{k:"lc",l:"Label style",t:"sel",o:{"":"Normal (no label)",city:"City",town:"Town",plant:"Red",vill:"Village",water:"Water"}}]},
   {k:"src",l:"Sources",h:"Plain text. Write “Wikipedia” and it becomes the Wikipedia link below."},
   {k:"wiki",l:"Wikipedia link",h:"Full address, e.g. https://en.wikipedia.org/wiki/Pripyat"},
