@@ -462,7 +462,7 @@ const CATS = {
   hot:{ru:"Радиационные «пятна»",en:"Radiation hotspots",sym:"hot",layer:"rad"},
   war:{ru:"События",en:"News and noteworthy",sym:"war",layer:"war"},
   nature:{ru:"Природа",en:"Nature",sym:"nature",layer:"nature"},
-  uo:{ru:"Неофициальные сведения",en:"Unofficial reports only",sym:"uo",layer:"uo"}
+  uo:{ru:"Неофициальные сведения",en:"Unofficial reports only",sym:"uo",layer:"uor"}
 };
 
 /* ===================== linework (schematic) ===================== */
@@ -574,7 +574,7 @@ const LAYERS = [
   {id:"notes",ru:"Отметки на листах",en:"Camps, vehicle washes, stations printed on the sheets",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><rect x="7" y="3" width="12" height="12" fill="${C.paper}" stroke="${C.blue}" stroke-width="1.8" transform="rotate(45 13 9)"/></svg>`},
   {id:"mem",ru:"Памятники",en:"Memorials and churches",on:true,sw:SYM.memorial},
   {id:"check",ru:"КПП",en:"Checkpoints",on:true,sw:SYM.check},
-  {id:"uo",ru:"Неофициальные сведения",en:"Places known only from visitors' unofficial reports (unverified)",on:false,sw:SYM.uo},
+  {id:"uor",ru:"Неофициальные сведения",en:"Places known only from visitors' unofficial reports (unverified)",on:true,sw:SYM.uo},
   {id:"rad",ru:"Радиация",en:"Cs-137 fallout traces 1986 (schematic), hotspots",on:true,sw:`<svg class="sw" viewBox="0 0 26 18"><defs><pattern id="sw-r" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="5" height="5" fill="#b3261e" fill-opacity=".22"/><line x1="0" y1="0" x2="0" y2="5" stroke="#b3261e" stroke-width="1.8"/></pattern></defs><rect x="1" y="1" width="24" height="16" fill="url(#sw-r)" stroke="${C.violet}"/></svg>`},
   {id:"war",ru:"События",en:"News and noteworthy",on:false,sw:SYM.war},
   {id:"nature",ru:"Природа",en:"Reserves and wildlife",on:false,sw:SYM.nature}
@@ -1012,7 +1012,7 @@ function renderAbout(){
   <p>Each entry says where its position came from: <span class="prec pub">published</span> coordinates, <span class="prec map">read from sheet</span> (±150–200 m), or <span class="prec est">estimated</span> from descriptions, or <span class="prec uo">from unofficial reports</span>. ${SITES.filter(s=>s.p==="pub").length} sites use published coordinates, ${SITES.filter(s=>s.p==="map").length} were placed from the sheets and ${SITES.filter(s=>s.p==="est").length} are still estimates. The ${VILL.filter(v=>v.k==="set").length} settlements were read by hand from the sheets with their printed population. Reading the sheets moved Rassokha about 12 km and Vilcha about 10 km from where the first version had them, and showed that Wikipedia's coordinates for Novoshepelychi fall on Chystohalivka.</p>
   <p>The radiation layer is still a schematic of the three 1986 fallout traces, not survey data. The zone outline is approximate.</p>
   <h3>Неофициальные сведения · unofficial reports</h3>
-  <p>Some cards carry a dashed box of observations from visitors' own accounts: independent explorers (the people often called «stalkers»), trip reports and tour sites. Each is dated and linked to its author, paraphrased rather than copied, and not checked by the atlas. Places that appear only in such accounts have a dashed <b>?</b> symbol and their own layer, off by default.</p>
+  <p>Some cards carry a dashed box of observations from visitors' own accounts: independent explorers (the people often called «stalkers»), trip reports and tour sites. Each is dated and linked to its author, paraphrased rather than copied, and not checked by the atlas. Places that appear only in such accounts have a dashed <b>?</b> symbol and their own layer, which can be switched off in Слои.</p>
   <p>The atlas does not record ways into the zone without a permit, ways past checkpoints or guards, or anything about military or security positions since February 2022. Photographs from these sources are not reproduced.</p>
   <h3>Помочь атласу · Help improve the atlas</h3>
   <p>Spotted something in the wrong place, know a site that's missing, or have a photo? Send a suggestion. Each one opens a short form on GitHub (a free account is needed) and is reviewed before anything changes on the map. Suggestions are public.</p>
