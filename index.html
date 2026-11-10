@@ -985,13 +985,13 @@ function renderInfo(){
     <dl class="facts">${v.k==="set"?`<dt>Population</dt><dd>${popTxt(v)}</dd>`:""}<dt>Sheet</dt><dd>${v.sh} ${sh.name||""} · изд. ${sh.ed||"?"}</dd>
     <dt>Coordinates</dt><dd>${dm(v.lat,"N","S")} ${dm(v.lng,"E","W")}<br>${v.lat.toFixed(4)}, ${v.lng.toFixed(4)}</dd><dt>Grid</dt><dd>${gkTxt(v.lat,v.lng)}</dd>
     <dt>Position</dt><dd><span class="prec map">read from sheet ±200 m</span></dd><dt>From unit 4</dt><dd>${d.toFixed(1)} км, az ${az.toFixed(0).padStart(3,"0")}° · ${zoneOf(d)}</dd></dl>
-    <p class="small muted">${d<=30?"Inside the 30-km circle, which was evacuated in spring 1986. ":""}${sh.ed&&sh.ed!=="1993"&&d<=30?"This sheet was printed from pre-accident survey data, so the population shown is what lived here before the evacuation.":""}</p>
+    <p class="small muted">${d<=30?"Inside the 30-km circle. The evacuation area was widened to 30 km about ten days after the accident, moving some 68,000 more people. ":""}${sh.ed&&sh.ed!=="1993"&&d<=30?"This sheet was printed from pre-accident survey data, so the population shown is what lived here before the evacuation.":""}</p>
     <div class="btnrow"><button class="btn" id="zoomto">Показать на карте</button></div>${suggestHTML(v.k==="poi"?"sheet note":"settlement",v.n+(v.t&&v.t!==v.n?" / "+v.t:""),v.lat,v.lng)}</div>`;
     pbody.querySelector("#zoomto").addEventListener("click",()=>map.flyTo([v.lat,v.lng],14,{duration:.7})); wireGallery(); return; }
   const s=SITES.find(x=>x.id===current);
   if(!s){pbody.innerHTML=`<h2>Объект не выбран</h2><p>Click any symbol on the map, a building on the plant schematic, or an entry in the index to read about it here.</p>`;return;}
   const [d,az]=distBear(U4,[s.lat,s.lng]);
-  const evac = (s.cat==="settle"&&!/chern|prip|poliske|dyt/.test(s.id)) ? `<p class="small muted">${d<=10?"Inside the 10-km zone, evacuated in early May 1986.":d<=30?"Inside the 30-km zone, evacuated by early May 1986.":"Outside the 30-km circle; resettled later as contamination maps came in."}</p>`:"";
+  const evac = (s.cat==="settle"&&!/chern|prip|poliske|dyt|slav/.test(s.id)) ? `<p class="small muted">${d<=10?"Inside the 10-km zone, evacuated in early May 1986.":d<=30?"Inside the 30-km zone, evacuated by early May 1986.":"Outside the 30-km circle; resettled later as contamination maps came in."}</p>`:"";
   const prec = s.p==="uo"?`<span class="prec uo">from unofficial reports ${esc(s.acc||"")}</span>`:s.p==="pub"?`<span class="prec pub">published</span>`:s.p==="map"?`<span class="prec map">read from sheet ${esc(s.acc||"")}</span>`:`<span class="prec est">estimated ${esc(s.acc||"")}</span>`;
   pbody.innerHTML=`<div class="card"><span class="cat">${CATS[s.cat].ru}</span><h2>${esc(s.en)}</h2><div class="ru">${esc(s.ru)}</div>
   ${galleryHTML(s.id)}<p>${esc(s.d)}</p>${evac}${uoHTML(s)}
