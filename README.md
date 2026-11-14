@@ -2,7 +2,7 @@
 
 **[Open the atlas →](https://renderedsheep.github.io/chernobyl-atlas/)**
 
-**Version 0.7.1** · November 2026 · Built by Fernand G.
+**Version 0.7.1** · November 2026 · Built by Fernand Gouveia
 
 [![The atlas around Pripyat and the power plant, with the Unit 4 entry open](docs/screenshot.webp)](https://renderedsheep.github.io/chernobyl-atlas/)
 
@@ -49,7 +49,7 @@ Positions are tagged in each entry as published, read from a sheet (±150–200 
 
 ## Licence
 - **Code** (`index.html`, `editor.html`, `tools/*.py`): [Apache License 2.0](LICENSE).
-- **Text and data** (`data/atlas-data.js`, `data/water.js`, `tools/readings/`, the written text in the pages and these documents): [CC BY-SA 4.0](LICENSE-CONTENT). Credit as “Chernobyl Zone Atlas by Fernand G., CC BY-SA 4.0”.
+- **Text and data** (`data/atlas-data.js`, `data/water.js`, `tools/readings/`, the written text in the pages and these documents): [CC BY-SA 4.0](LICENSE-CONTENT). Credit as “Chernobyl Zone Atlas by Fernand Gouveia, CC BY-SA 4.0”.
 - **Not covered:** photographs in `photos/` keep their own licences (see [CREDITS.md](CREDITS.md)); the map scans and tiles in `tools/src/` and `tiles/` are third-party material of uncertain copyright status and are not licensed by the author. The screenshot in `docs/` shows both (the photo is by Ingmar Runge, CC BY-SA 3.0, via Wikimedia Commons).
 
 Details in [NOTICE](NOTICE).
