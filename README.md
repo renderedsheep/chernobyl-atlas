@@ -55,4 +55,4 @@ Positions are tagged in each entry as published, read from a sheet (±150–200 
 Details in [NOTICE](NOTICE).
 
 ## Посвящение · Dedication
-This atlas is dedicated to everyone who has worked to preserve Chernobyl's history with care and respect, and to record it for future generations. It is also dedicated to those who lost their lives as a direct result of the accident.
+This atlas is dedicated to everyone who has worked to preserve Chernobyl's history - the engineering, people & culture - with care and respect, and to record it for future generations.
